@@ -26,7 +26,7 @@ AMainPlayerCharacter::AMainPlayerCharacter()
 	bUseControllerRotationYaw = false;
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 200.f, 0.f);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
 	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
 
 	DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Detection Sphere"));
