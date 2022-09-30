@@ -93,6 +93,9 @@ public:
 
 	int32 EquippedWeaponIndex = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float MaxLockOnDistance = 2000.f;
 	bool bFaceTarget = true;
@@ -174,12 +177,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UTexture2D* GetEquipmentImage(int32 Index);
 
+	UFUNCTION(BlueprintCallable)
+	UTexture2D* GetGearImage(int32 Index, int32& ItemCount);
+
+	void GetGear(int32 Index);
+
+	UFUNCTION(BlueprintCallable)
+	void SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex);
+
 	void SortInventory();
 	void QuickSort(TArray<TSubclassOf<AItem>> Inventory, int Left, int Right);
 	void Partition(TArray<TSubclassOf<AItem>> Arr, int Left, int Right, int i, int j);
 	void Swap(int Left, int Right);
-
-	void LogInventory();
 
 	void Dodge();
 
@@ -212,10 +221,14 @@ protected:
 	void MoveRight(float Value);
 
 	void LMB();
-	void ESC();
-	void MMB();
-	void E();
-	void Q();
 	void RMBPressed();
 	void RMBReleased();
+	void MMB();
+	void ESC();
+	void E();
+	void Q();
+	void OnePressed();
+	void TwoPressed();
+	void ThreePressed();
+	void FourPressed();
 };

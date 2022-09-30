@@ -101,29 +101,23 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Space", IE_Pressed, this, &AMainCharacter::Dodge);
 	PlayerInputComponent->BindAction("LMB", IE_Pressed, this, &AMainCharacter::LMB);
-	PlayerInputComponent->BindAction("ESC", IE_Pressed, this, &AMainCharacter::ESC);
-	PlayerInputComponent->BindAction("MMB", IE_Pressed, this, &AMainCharacter::MMB);
-	PlayerInputComponent->BindAction("E", IE_Pressed, this, &AMainCharacter::E);
-	PlayerInputComponent->BindAction("Q", IE_Pressed, this, &AMainCharacter::Q);
 	PlayerInputComponent->BindAction("RMB", IE_Pressed, this, &AMainCharacter::RMBPressed);
 	PlayerInputComponent->BindAction("RMB", IE_Released, this, &AMainCharacter::RMBReleased);
-	PlayerInputComponent->BindAction("Space", IE_Pressed, this, &AMainCharacter::LogInventory);
+	PlayerInputComponent->BindAction("MMB", IE_Pressed, this, &AMainCharacter::MMB);
+	PlayerInputComponent->BindAction("ESC", IE_Pressed, this, &AMainCharacter::ESC);
+	PlayerInputComponent->BindAction("Space", IE_Pressed, this, &AMainCharacter::Dodge);
+	PlayerInputComponent->BindAction("E", IE_Pressed, this, &AMainCharacter::E);
+	PlayerInputComponent->BindAction("Q", IE_Pressed, this, &AMainCharacter::Q);
+	PlayerInputComponent->BindAction("1", IE_Pressed, this, &AMainCharacter::OnePressed);
+	PlayerInputComponent->BindAction("2", IE_Pressed, this, &AMainCharacter::TwoPressed);
+	PlayerInputComponent->BindAction("3", IE_Pressed, this, &AMainCharacter::ThreePressed);
+	PlayerInputComponent->BindAction("4", IE_Pressed, this, &AMainCharacter::FourPressed);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMainCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMainCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-}
-
-void AMainCharacter::LogInventory()
-{
-	if (ResourceInventory.Num() > 0)
-	{
-		for (AResource* Resource : ResourceInventory)
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *Resource->ResourceName);
-	}
 }
 
 void AMainCharacter::MoveForward(float Value)
@@ -173,12 +167,17 @@ void AMainCharacter::LMB()
 	}
 }
 
-void AMainCharacter::ESC()
+void AMainCharacter::RMBPressed()
 {
-	if (MainPlayerController)
+	if (!bAttacking && !bDodging && !bInventoryOpen)
 	{
-		MainPlayerController->TogglePauseMenu();
+		bBlocking = true;
 	}
+}
+
+void AMainCharacter::RMBReleased()
+{
+	bBlocking = false;
 }
 
 void AMainCharacter::MMB()
@@ -197,6 +196,14 @@ void AMainCharacter::MMB()
 	}
 
 	SwitchMovementStyle(EMovementStyle::EMS_Free);
+}
+
+void AMainCharacter::ESC()
+{
+	if (MainPlayerController)
+	{
+		MainPlayerController->TogglePauseMenu();
+	}
 }
 
 void AMainCharacter::E()
@@ -270,17 +277,36 @@ void AMainCharacter::Q()
 	}
 }
 
-void AMainCharacter::RMBPressed()
+void AMainCharacter::OnePressed()
 {
-	if (!bAttacking && !bDodging && !bInventoryOpen)
+	if (CurrentGearIndexes[0] != -1)
 	{
-		bBlocking = true;
+		GetGear(CurrentGearIndexes[0]);
 	}
 }
 
-void AMainCharacter::RMBReleased()
+void AMainCharacter::TwoPressed()
 {
-	bBlocking = false;
+	if (CurrentGearIndexes[1] != -1)
+	{
+		GetGear(CurrentGearIndexes[1]);
+	}
+}
+
+void AMainCharacter::ThreePressed()
+{
+	if (CurrentGearIndexes[2] != -1)
+	{
+		GetGear(CurrentGearIndexes[2]);
+	}
+}
+
+void AMainCharacter::FourPressed()
+{
+	if (CurrentGearIndexes[3] != -1)
+	{
+		GetGear(CurrentGearIndexes[3]);
+	}
 }
 
 void AMainCharacter::SetHealth(float Amount)
@@ -725,6 +751,122 @@ UTexture2D* AMainCharacter::GetEquipmentImage(int32 Index)
 	}
 
 	return Image;
+}
+
+UTexture2D* AMainCharacter::GetGearImage(int32 Index, int32& ItemCount)
+{
+	UTexture2D* Image = nullptr;
+	int ItemIndex = 0;
+	ItemCount = 0;
+
+	if (Index == -1) return nullptr;
+
+	if (UsablesInventory.Num() > 0)
+	{
+		AUsable* CurrentUsable = nullptr;
+		AUsable* PreviousVisible = nullptr;
+
+		for (int i = 0; i < UsablesInventory.Num(); i++)
+		{
+			if (i == 0) PreviousVisible = UsablesInventory[0];
+			else PreviousVisible = CurrentUsable;
+			CurrentUsable = UsablesInventory[i];
+
+			if (CurrentUsable->UsableName != PreviousVisible->UsableName)
+			{
+				if (ItemIndex == Index)
+				{
+					return Image;
+				}
+				ItemIndex++;
+				ItemCount = 1;
+			}
+			else if (CurrentUsable->UsableName == PreviousVisible->UsableName)
+			{
+				ItemCount++;
+			}
+
+			if(ItemIndex == Index)
+			{
+				Image = CurrentUsable->UsableImage;
+			}
+			else
+			{
+				ItemCount = 0;
+				Image = nullptr;
+			}
+		}
+	}
+
+	return Image;
+}
+
+void AMainCharacter::GetGear(int32 Index)
+{
+	if (UsablesInventory.Num() > 0)
+	{
+		int32 GearIndex = 0;
+		AUsable* CurrentUsable = nullptr;
+		AUsable* PreviousVisible = nullptr;
+
+		for (int i = 0; i < UsablesInventory.Num(); i++)
+		{
+			if (i == 0) PreviousVisible = UsablesInventory[0];
+			else PreviousVisible = CurrentUsable;
+			CurrentUsable = UsablesInventory[i];
+
+			if (CurrentUsable->UsableName != PreviousVisible->UsableName)
+			{
+				GearIndex++;
+				if (GearIndex == Index)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("%s"), *CurrentUsable->UsableName);
+				}
+			}
+			else if (CurrentUsable->UsableName == PreviousVisible->UsableName)
+			{
+				if (GearIndex == Index)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("%s"), *UsablesInventory[i]->UsableName);
+				}
+			}
+
+		}
+	}
+}
+
+void AMainCharacter::SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Desired Index: %d, %d"), GearBoxIndex, DesiredInventoryIndex);
+
+	int32 SwapIndex = -1;
+	int32 SwapValue = -1;
+
+	for (int i = 0; i < CurrentGearIndexes.Num(); i++)
+	{
+		if (i == GearBoxIndex)
+		{
+			CurrentGearIndexes[i] = DesiredInventoryIndex;
+			SwapValue = CurrentGearIndexes[i];
+
+			UE_LOG(LogTemp, Warning, TEXT("New Index: %d, %d"), i, CurrentGearIndexes[i]);
+		}
+
+		if (i != GearBoxIndex && CurrentGearIndexes[i] == DesiredInventoryIndex)
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("Current Swap Index: %d, %d"), i, CurrentGearIndexes[i]);
+			SwapIndex = i;
+			SwapValue = CurrentGearIndexes[i];
+		}
+	}
+
+	if (SwapIndex >= 0)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("New Swap Index: %d, %d"), SwapIndex, SwapValue);
+		//CurrentGearIndexes[SwapIndex] = SwapValue;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT(""));
 }
 
 //void AMainCharacter::SortInventory()
