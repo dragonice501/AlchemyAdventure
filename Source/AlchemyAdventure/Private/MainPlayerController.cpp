@@ -17,16 +17,6 @@ void AMainPlayerController::BeginPlay()
 		HUDOverlay->SetVisibility(ESlateVisibility::Visible);
 	}
 
-	if (WPauseMenu)
-	{
-		PauseMenu = CreateWidget<UUserWidget>(this, WPauseMenu);
-		if (PauseMenu)
-		{
-			PauseMenu->AddToViewport();
-			PauseMenu->SetVisibility(ESlateVisibility::Hidden);
-		}
-	}
-
 	if (WLockOnWidget)
 	{
 		LockOnWidget = CreateWidget<UUserWidget>(this, WLockOnWidget);
@@ -72,40 +62,6 @@ void AMainPlayerController::BeginPlay()
 void AMainPlayerController::Tick(float DeltaTime)
 {
 	
-}
-
-void AMainPlayerController::DisplayPauseMenu_Implementation()
-{
-	if (PauseMenu)
-	{
-		bPauseMenuVisible = true;
-		PauseMenu->SetVisibility(ESlateVisibility::Visible);
-
-		FInputModeGameAndUI InputModeGameAndUI;
-		SetInputMode(InputModeGameAndUI);
-
-		bShowMouseCursor = true;
-	}
-}
-
-void AMainPlayerController::RemovePauseMenu_Implementation()
-{
-	if (PauseMenu)
-	{
-		bPauseMenuVisible = true;
-		PauseMenu->SetVisibility(ESlateVisibility::Hidden);
-		bShowMouseCursor = false;
-		bPauseMenuVisible = false;
-
-		FInputModeGameOnly InputModeGameOnly;
-		SetInputMode(InputModeGameOnly);
-	}
-}
-
-void AMainPlayerController::TogglePauseMenu()
-{
-	if (bPauseMenuVisible) RemovePauseMenu();
-	else DisplayPauseMenu();
 }
 
 void AMainPlayerController::ToggleInventory(bool Visible)

@@ -46,6 +46,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	float BlockingBlendWeight = 0.f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	float UsingBlendWeight = 0.f;
+
 public:
 
 	virtual void NativeInitializeAnimation() override;

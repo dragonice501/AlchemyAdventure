@@ -45,6 +45,7 @@ void UMainAnimInstance::UpdateAnimationProperties(float DeltaTime)
 		{
 			bIsAccelerating = MainCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0;
 			BlockingBlendWeight = MainCharacter->bBlocking ? 1.0f : 0.f;
+			UsingBlendWeight = MainCharacter->bUsing ? 1.0f : 0.f;
 		}
 		else if (Enemy)
 		{

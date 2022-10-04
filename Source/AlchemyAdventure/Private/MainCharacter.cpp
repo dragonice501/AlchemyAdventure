@@ -55,12 +55,29 @@ void AMainCharacter::BeginPlay()
 	EnemyDetectionSphere->OnComponentEndOverlap.AddDynamic(this, &AMainCharacter::EnemyDetectionSphereEndOverlap);
 
 	MainPlayerController = Cast<AMainPlayerController>(GetController());
+
+	if (StartingUsables.Num() > 0)
+	{
+		for (int i = 0; i < StartingUsables.Num(); i++)
+		{
+			AUsable* Usable = Cast<AUsable>(StartingUsables[i]->GetDefaultObject());
+			if (Usable)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UsablePointer"));
+				Usable->BuildUsable(*Usable->StartingName);
+				UsablesInventory.Add(Usable);
+			}
+		}
+		
+	}
 }
 
 // Called every frame
 void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	GetCharacterMovement()->MaxWalkSpeed = bMobilityModifier ? MaxWalkSpeed * MobilityModifier : MaxWalkSpeed;
 
 	if (bLockedOn && TargetEnemy)
 	{
@@ -105,7 +122,6 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAction("RMB", IE_Pressed, this, &AMainCharacter::RMBPressed);
 	PlayerInputComponent->BindAction("RMB", IE_Released, this, &AMainCharacter::RMBReleased);
 	PlayerInputComponent->BindAction("MMB", IE_Pressed, this, &AMainCharacter::MMB);
-	PlayerInputComponent->BindAction("ESC", IE_Pressed, this, &AMainCharacter::ESC);
 	PlayerInputComponent->BindAction("Space", IE_Pressed, this, &AMainCharacter::Dodge);
 	PlayerInputComponent->BindAction("E", IE_Pressed, this, &AMainCharacter::E);
 	PlayerInputComponent->BindAction("Q", IE_Pressed, this, &AMainCharacter::Q);
@@ -128,6 +144,12 @@ void AMainCharacter::MoveForward(float Value)
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
+	FString Text = FString::SanitizeFloat(GetVelocity().Size());
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 0, FColor::Orange, Text);
+	}
+
 	AddMovementInput(Direction, Value);
 }
 
@@ -138,6 +160,12 @@ void AMainCharacter::MoveRight(float Value)
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	FString Text = FString::SanitizeFloat(GetVelocity().Size());
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 0, FColor::Orange, Text);
+	}
 
 	AddMovementInput(Direction, Value);
 }
@@ -169,7 +197,7 @@ void AMainCharacter::LMB()
 
 void AMainCharacter::RMBPressed()
 {
-	if (!bAttacking && !bDodging && !bInventoryOpen)
+	if (!bAttacking && !bDodging && !bInventoryOpen && RightHandEquipment)
 	{
 		bBlocking = true;
 	}
@@ -198,14 +226,6 @@ void AMainCharacter::MMB()
 	SwitchMovementStyle(EMovementStyle::EMS_Free);
 }
 
-void AMainCharacter::ESC()
-{
-	if (MainPlayerController)
-	{
-		MainPlayerController->TogglePauseMenu();
-	}
-}
-
 void AMainCharacter::E()
 {
 	if (bCanPickup && !bInventoryOpen)
@@ -219,6 +239,7 @@ void AMainCharacter::E()
 				if (EquipmentInventory.Num() == 1) EquippedWeaponIndex = 0;
 
 				CurrentPickup->Destroy();
+				DynamicMulticastSetImageAndCount.Broadcast();
 			}
 
 			TSubclassOf<AResource> PickupResource = CurrentPickup->BPPickupItem;
@@ -232,8 +253,9 @@ void AMainCharacter::E()
 					ResourceInventory.Sort();
 
 					CurrentPickup->Destroy();
+
+					DynamicMulticastSetImageAndCount.Broadcast();
 				}
-				
 			}
 
 			if (OverlappingPickups.Num() == 0)
@@ -255,31 +277,30 @@ void AMainCharacter::Q()
 		if (bInventoryOpen)
 		{
 			MainPlayerController->RemovePickupPrompt();
+			SwitchMovementStyle(EMovementStyle::EMS_Free);
+			SwitchCameraMovement(ECameraMovement::EMC_Inventory);
+
+			CameraFixedRotation = FRotator(0.f, GetControlRotation().Yaw, 0.f);
+			SpringArm->SetWorldRotation(CameraFixedRotation);
+
+			DynamicMulticastOpenCharacterMenu.Broadcast();
+		}
+		else
+		{
+			SwitchCameraMovement(ECameraMovement::ECM_Free);
+			DynamicMulticastResetInventoryHUD.Broadcast();
 		}
 
 		if (bLockedOn)
 		{
 			UntargetEnemy();
 		}
-
-		if (bInventoryOpen)
-		{
-			SwitchMovementStyle(EMovementStyle::EMS_Free);
-			SwitchCameraMovement(ECameraMovement::EMC_Inventory);
-
-			CameraFixedRotation = FRotator(0.f, GetControlRotation().Yaw, 0.f);
-			SpringArm->SetWorldRotation(CameraFixedRotation);
-		}
-		else
-		{
-			SwitchCameraMovement(ECameraMovement::ECM_Free);
-		}
 	}
 }
 
 void AMainCharacter::OnePressed()
 {
-	if (CurrentGearIndexes[0] != -1)
+	if (CurrentGearIndexes[0] != -1 && !bInventoryOpen && !bUsing)
 	{
 		GetGear(CurrentGearIndexes[0]);
 	}
@@ -287,7 +308,7 @@ void AMainCharacter::OnePressed()
 
 void AMainCharacter::TwoPressed()
 {
-	if (CurrentGearIndexes[1] != -1)
+	if (CurrentGearIndexes[1] != -1 && !bInventoryOpen && !bUsing)
 	{
 		GetGear(CurrentGearIndexes[1]);
 	}
@@ -295,7 +316,7 @@ void AMainCharacter::TwoPressed()
 
 void AMainCharacter::ThreePressed()
 {
-	if (CurrentGearIndexes[2] != -1)
+	if (CurrentGearIndexes[2] != -1 && !bInventoryOpen && !bUsing)
 	{
 		GetGear(CurrentGearIndexes[2]);
 	}
@@ -303,7 +324,7 @@ void AMainCharacter::ThreePressed()
 
 void AMainCharacter::FourPressed()
 {
-	if (CurrentGearIndexes[3] != -1)
+	if (CurrentGearIndexes[3] != -1 && !bInventoryOpen && !bUsing)
 	{
 		GetGear(CurrentGearIndexes[3]);
 	}
@@ -589,55 +610,59 @@ void AMainCharacter::EquipWeaponL(int32 Index)
 	}
 }
 
-UTexture2D* AMainCharacter::GetResourceImage(int32 Index, int32& ItemCount)
+void AMainCharacter::GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource)
 {
-	UTexture2D* Image = nullptr;
-	int ItemIndex = 0;
-	ItemCount = 0;
+	int32 Index = 0;
 
-	if (ResourceInventory.Num() > 0)
+	if(ResourceInventory.Num() > 0)
 	{
 		AResource* CurrentResource = nullptr;
 		AResource* PreviousResource = nullptr;
 
-		for(int i = 0; i < ResourceInventory.Num(); i++)
+		for (int i = 0; i < ResourceInventory.Num(); i++)
 		{
+			ResourceInventoryIndex = i;
 			if (i == 0) PreviousResource = ResourceInventory[0];
 			else PreviousResource = CurrentResource;
 			CurrentResource = ResourceInventory[i];
 
 			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
 			{
-				if (ItemIndex == Index)
+				Index++;
+				if (Index == ResourceStackIndex && i != InUseIngredientIndex)
 				{
-					return Image;
+					ResourceImage = CurrentResource->ResourceImage;
+					ResourceInventoryIndex = i;
+					bHasResource = true;
+					return;
 				}
-				ItemIndex++;
-				ItemCount = 1;
 			}
-			else if(CurrentResource->ResourceName == PreviousResource->ResourceName)
+			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
 			{
-				ItemCount++;
+				if (Index == ResourceStackIndex && i != InUseIngredientIndex)
+				{
+					ResourceImage = CurrentResource->ResourceImage;
+					ResourceInventoryIndex = i;
+					bHasResource = true;
+					return;
+				}
 			}
+		}
 
-			if (ItemIndex == Index)
-			{
-				Image = CurrentResource->ResourceImage;
-			}
-			else
-			{
-				ItemCount = 0;
-				Image = nullptr;
-			}
+		if (Index == ResourceStackIndex && ResourceInventoryIndex != InUseIngredientIndex)
+		{
+			ResourceImage = CurrentResource->ResourceImage;
+			bHasResource = true;
+			return;
 		}
 	}
 
-	return Image;
+	bHasResource = false;
 }
 
-bool AMainCharacter::HasResource(int32 Index, int32 InUseResourceIndex, int32& ResourceIndex)
+void AMainCharacter::GetResourceImage(int32 ResourceStackIndex, UTexture2D*& ResourceImage)
 {
-	int ItemIndex = 0;
+	int32 Index = 0;
 
 	if (ResourceInventory.Num() > 0)
 	{
@@ -652,25 +677,71 @@ bool AMainCharacter::HasResource(int32 Index, int32 InUseResourceIndex, int32& R
 
 			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
 			{
-				ItemIndex++;
-				if (ItemIndex == Index && i != InUseResourceIndex)
+				if (Index == ResourceStackIndex)
 				{
-					ResourceIndex = i;
-					return true;
+					ResourceImage = PreviousResource->ResourceImage;
+					return;
 				}
+				Index++;
 			}
 			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
 			{
-				if (ItemIndex == Index && i != InUseResourceIndex)
+				if (Index == ResourceStackIndex)
 				{
-					ResourceIndex = i;
-					return true;
+					ResourceImage = CurrentResource->ResourceImage;
+					return;
 				}
 			}
 		}
-	}
 
-	return false;
+		if (Index == ResourceStackIndex)
+		{
+			ResourceImage = CurrentResource->ResourceImage;
+			return;
+		}
+	}
+}
+
+void AMainCharacter::GetResourceCount(int32 ResourceStackIndex, int32& ResourceCount)
+{
+	int32 Index = 0;
+	int32 ItemCount = 0;
+
+	if (ResourceInventory.Num() > 0)
+	{
+		AResource* CurrentResource = nullptr;
+		AResource* PreviousResource = nullptr;
+
+		for (int i = 0; i < ResourceInventory.Num(); i++)
+		{
+			if (i == 0) PreviousResource = ResourceInventory[0];
+			else PreviousResource = CurrentResource;
+			CurrentResource = ResourceInventory[i];
+
+			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
+			{
+				if (Index == ResourceStackIndex)
+				{
+					ResourceCount = ItemCount;
+					return;
+				}
+				Index++;
+				ItemCount = 1;
+			}
+			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
+			{
+				ItemCount++;
+			}
+		}
+
+		if (Index == ResourceStackIndex)
+		{
+			ResourceCount = ItemCount;
+			return;
+		}
+
+		ItemCount = 0;
+	}
 }
 
 UTexture2D* AMainCharacter::CheckCanCraft(int32 FirstIndex, int32 SecondIndex)
@@ -701,13 +772,15 @@ UTexture2D* AMainCharacter::CheckCanCraft(int32 FirstIndex, int32 SecondIndex)
 	return Image;
 }
 
-bool AMainCharacter::AddUsable(int32 FirstIngredient, int32 SecondIngredient)
+bool AMainCharacter::AddUsable(int32 FirstIngredientIndex, int32 SecondIngredientIndex)
 {
-	if (FirstIngredient >= 0)
+	if (FirstIngredientIndex >= 0)
 	{
-		if (SecondIngredient >= 0)
+		IngredientOneName = *ResourceInventory[FirstIngredientIndex]->ResourceName;
+		if (SecondIngredientIndex >= 0)
 		{
-			FName Craftable = *ResourceInventory[FirstIngredient]->CheckCanCombine(ResourceInventory[SecondIngredient]);
+			IngredientTwoName = *ResourceInventory[SecondIngredientIndex]->ResourceName;
+			FName Craftable = *ResourceInventory[FirstIngredientIndex]->CheckCanCombine(ResourceInventory[SecondIngredientIndex]);
 			if (Craftable != "")
 			{
 				AUsable* Usable = NewObject<AUsable>();
@@ -715,8 +788,8 @@ bool AMainCharacter::AddUsable(int32 FirstIngredient, int32 SecondIngredient)
 				{
 					Usable->BuildUsable(Craftable);
 					UsablesInventory.Add(Usable);
-					ResourceInventory.RemoveAt(FirstIngredient);
-					ResourceInventory.RemoveAt(SecondIngredient - 1);
+					ResourceInventory.RemoveAt(FirstIngredientIndex);
+					ResourceInventory.RemoveAt(SecondIngredientIndex - 1);
 
 					return true;
 				}
@@ -724,6 +797,32 @@ bool AMainCharacter::AddUsable(int32 FirstIngredient, int32 SecondIngredient)
 		}
 	}
 
+	IngredientOneName = "";
+	IngredientTwoName = "";
+	return false;
+}
+
+bool AMainCharacter::CheckCanCraftMore(int32 FirstIngredientIndex, int32 SecondIngredientIndex)
+{
+	if (FirstIngredientIndex == SecondIngredientIndex) return false;
+
+	if (FirstIngredientIndex >= 0 && ResourceInventory.Num() >= SecondIngredientIndex)
+	{
+		if (IngredientOneName == *ResourceInventory[FirstIngredientIndex]->ResourceName)
+		{
+			if (SecondIngredientIndex >= 0)
+			{
+				if (IngredientTwoName == *ResourceInventory[SecondIngredientIndex]->ResourceName)
+				{
+					return true;
+				}
+			}
+		}
+		
+	}
+
+	IngredientOneName = "";
+	IngredientTwoName = "";
 	return false;
 }
 
@@ -818,27 +917,105 @@ void AMainCharacter::GetGear(int32 Index)
 			if (CurrentUsable->UsableName != PreviousVisible->UsableName)
 			{
 				GearIndex++;
-				if (GearIndex == Index)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("%s"), *CurrentUsable->UsableName);
-				}
 			}
-			else if (CurrentUsable->UsableName == PreviousVisible->UsableName)
+			
+			if (GearIndex == Index)
 			{
-				if (GearIndex == Index)
+				switch (CurrentUsable->StatusEffect)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("%s"), *UsablesInventory[i]->UsableName);
+				case EStatusEffect::ESE_None:
+					break;
+				case EStatusEffect::ESE_Attack:
+					UE_LOG(LogTemp, Warning, TEXT("Attack Potion"));
+					SetAttackModifier(CurrentUsable->StatusEffectTime, CurrentUsable->AttackModifier);
+					PlayUseMontage("CrushPotion");
+					break;
+				case EStatusEffect::ESE_Heal:
+					UE_LOG(LogTemp, Warning, TEXT("Heal Potion"));
+					Heal(CurrentUsable->HealAmount);
+					UsablesInventory.Remove(CurrentUsable);
+					DynamicMulticastSetImageAndCount.Broadcast();
+					PlayUseMontage("DrinkPotion");
+					break;
+				case EStatusEffect::ESE_Defense:
+					UE_LOG(LogTemp, Warning, TEXT("Defense Potion"));
+					SetDefenseModifier(CurrentUsable->StatusEffectTime, CurrentUsable->DefenseModifier);
+					PlayUseMontage("CrushPotion");
+					break;
+				case EStatusEffect::ESE_Mobility:
+					UE_LOG(LogTemp, Warning, TEXT("Mobility Potion"));
+					SetMobilityModifier(CurrentUsable->StatusEffectTime, CurrentUsable->MobilityModifier);
+					PlayUseMontage("CrushPotion");
+					break;
+				default:
+					break;
 				}
 			}
-
 		}
+	}
+}
+
+void AMainCharacter::SetAttackModifier(int32 Time, float Modifier)
+{
+	bAttackModifier = true;
+	AttackModifier = Modifier;
+	GetWorldTimerManager().SetTimer(AttackModifierTimer, this, &AMainCharacter::ResetAttackModifier, Time);
+}
+
+void AMainCharacter::ResetAttackModifier()
+{
+	bAttackModifier = false;
+	AttackModifier = 1;
+}
+
+void AMainCharacter::SetDefenseModifier(int32 Time, float Modifier)
+{
+	bDefenseModifier = true;
+	DefenseModifier = Modifier;
+	GetWorldTimerManager().SetTimer(DefenseModifierTimer, this, &AMainCharacter::ResetAttackModifier, Time);
+}
+
+void AMainCharacter::ResetDefenseModifier()
+{
+	bDefenseModifier = false;
+	DefenseModifier = 1;
+}
+
+void AMainCharacter::SetMobilityModifier(int32 Time, float Modifier)
+{
+	bMobilityModifier = true;
+	MobilityModifier = Modifier;
+	GetWorldTimerManager().SetTimer(MobilityModifierTimer, this, &AMainCharacter::ResetMobilityModifier, Time);
+	CustomTimeDilation = Modifier;
+}
+
+void AMainCharacter::ResetMobilityModifier()
+{
+	bMobilityModifier = false;
+	MobilityModifier = 1;
+	CustomTimeDilation = MobilityModifier;
+}
+
+void AMainCharacter::Heal(float Amount)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Healed: %f"), Amount);
+	Health += Amount;
+	if (Health > MaxHealth) Health = MaxHealth;
+}
+
+void AMainCharacter::PlayUseMontage(FName MontageSection)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		bUsing = true;
+		AnimInstance->Montage_Play(UseMontage);
+		AnimInstance->Montage_JumpToSection(MontageSection);
 	}
 }
 
 void AMainCharacter::SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Desired Index: %d, %d"), GearBoxIndex, DesiredInventoryIndex);
-
 	int32 SwapIndex = -1;
 	int32 SwapValue = -1;
 
@@ -846,27 +1023,24 @@ void AMainCharacter::SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryI
 	{
 		if (i == GearBoxIndex)
 		{
-			CurrentGearIndexes[i] = DesiredInventoryIndex;
 			SwapValue = CurrentGearIndexes[i];
-
-			UE_LOG(LogTemp, Warning, TEXT("New Index: %d, %d"), i, CurrentGearIndexes[i]);
+			CurrentGearIndexes[i] = DesiredInventoryIndex;
 		}
 
 		if (i != GearBoxIndex && CurrentGearIndexes[i] == DesiredInventoryIndex)
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("Current Swap Index: %d, %d"), i, CurrentGearIndexes[i]);
 			SwapIndex = i;
-			SwapValue = CurrentGearIndexes[i];
 		}
 	}
 
 	if (SwapIndex >= 0)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("New Swap Index: %d, %d"), SwapIndex, SwapValue);
-		//CurrentGearIndexes[SwapIndex] = SwapValue;
+		CurrentGearIndexes[SwapIndex] = SwapValue;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT(""));
+	/*else
+	{
+		CurrentGearIndexes[SwapIndex] = -1;
+	}*/
 }
 
 //void AMainCharacter::SortInventory()

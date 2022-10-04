@@ -65,7 +65,17 @@ void AWeapon::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 			{
 				if (DamageType && Owner)
 				{
-					UGameplayStatics::ApplyDamage(Enemy, Damage, Owner->GetController(), this, DamageType);
+					int32 FinalDamage = Damage;
+					if (OwningCharacter->bAttackModifier)
+					{
+						FinalDamage *= OwningCharacter->AttackModifier;
+					}
+
+					UGameplayStatics::ApplyDamage(Enemy, FinalDamage, Owner->GetController(), this, DamageType);
+					if (Enemy->Health == 0)
+					{
+						OwningCharacter->FindBestTargetEnemy();
+					}
 
 					if (OwningCharacter->TargetEnemy != Enemy)
 					{
@@ -78,20 +88,23 @@ void AWeapon::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		else if (OwningEnemy)
 		{
 			AMainCharacter* MainCharacter = Cast<AMainCharacter>(OtherActor);
-
-			if (HitCharacters.Contains(MainCharacter)) return;
-
-			if (MainCharacter->bInvincible)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Character Invincible"));
-				return;
-			}
-
 			if (MainCharacter)
 			{
+				if (HitCharacters.Contains(MainCharacter)) return;
+
+				if (MainCharacter->bInvincible)
+				{
+					return;
+				}
+
 				if (DamageType && Owner)
 				{
-					UGameplayStatics::ApplyDamage(MainCharacter, Damage, Owner->GetController(), this, DamageType);
+					int32 FinalDamage = Damage;
+					if (MainCharacter->bDefenseModifier)
+					{
+						FinalDamage *= MainCharacter->DefenseModifier;
+					}
+					UGameplayStatics::ApplyDamage(MainCharacter, FinalDamage, Owner->GetController(), this, DamageType);
 					MainCharacter->ResetDodge();
 				}
 				HitCharacters.Add(MainCharacter);

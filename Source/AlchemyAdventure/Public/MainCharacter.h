@@ -7,6 +7,8 @@
 #include "MainCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastSetImageAndCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastOpenCharacterMenu);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastResetInventoryHUD);
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -56,6 +58,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
 	UAnimMontage* DodgeMontage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
+	UAnimMontage* UseMontage;
+
 	FVector InputVector;
 
 	AEnemy* TargetEnemy = nullptr;
@@ -66,6 +71,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bLockedOn = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bUsing = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanCombo = false;
@@ -86,6 +94,9 @@ public:
 	TArray<AUsable*> UsablesInventory;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<AUsable>> StartingUsables;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<APickup*> OverlappingPickups;
 	APickup* CurrentPickup;
 	bool bCanPickup = false;
@@ -95,6 +106,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
+
+	float MaxWalkSpeed = 400.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float MaxLockOnDistance = 2000.f;
@@ -126,8 +139,33 @@ public:
 
 	FTimerHandle ResetStaminaRechargeTimer;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	//Status Effects
+	int32 StatusEffectTime;
+
+	FTimerHandle AttackModifierTimer;
+	bool bAttackModifier = false;
+	float AttackModifier = 1.f;
+
+	FTimerHandle DefenseModifierTimer;
+	bool bDefenseModifier = false;
+	float DefenseModifier = 1.f;
+
+	FTimerHandle MobilityModifierTimer;
+	bool bMobilityModifier = false;
+	float MobilityModifier = 1.f;
+
+	FName IngredientOneName;
+	FName IngredientTwoName;
+
+	//Delegates
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
 	FDynamicMulticastSetImageAndCount DynamicMulticastSetImageAndCount;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
+	FDynamicMulticastResetInventoryHUD DynamicMulticastResetInventoryHUD;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
+	FDynamicMulticastOpenCharacterMenu DynamicMulticastOpenCharacterMenu;
 
 public:
 	// Sets default values for this character's properties
@@ -165,14 +203,18 @@ public:
 	void EquipWeaponL(int32 Index);
 
 	UFUNCTION(BlueprintCallable)
-	UTexture2D* GetResourceImage(int32 Index, int32& ItemCount);
+	void GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource);
 	UFUNCTION(BlueprintCallable)
-	bool HasResource(int32 Index, int32 InUseResourceIndex, int32& ResourceIndex);
+	void GetResourceImage(int32 ResourceStackIndex, UTexture2D*& ResourceImage);
+	UFUNCTION(BlueprintCallable)
+	void GetResourceCount(int32 ResourceStackIndex, int32& ResourceCount);
 
 	UFUNCTION(BlueprintCallable)
 	UTexture2D* CheckCanCraft(int32 FirstIndex, int32 SecondIndex);
 	UFUNCTION(BlueprintCallable)
 	bool AddUsable(int32 FirstIngredient, int32 SecondIngredient);
+	UFUNCTION(BlueprintCallable)
+	bool CheckCanCraftMore(int32 FirstIngredientIndex, int32 SecondIngredientIndex);
 
 	UFUNCTION(BlueprintCallable)
 	UTexture2D* GetEquipmentImage(int32 Index);
@@ -181,6 +223,15 @@ public:
 	UTexture2D* GetGearImage(int32 Index, int32& ItemCount);
 
 	void GetGear(int32 Index);
+	void SetAttackModifier(int32 Time, float Modifier);
+	void ResetAttackModifier();
+	void SetDefenseModifier(int32 Time, float Modifier);
+	void ResetDefenseModifier();
+	void SetMobilityModifier(int32 Time, float Modifier);
+	void ResetMobilityModifier();
+	void Heal(float Amount);
+
+	void PlayUseMontage(FName MontageSection);
 
 	UFUNCTION(BlueprintCallable)
 	void SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex);
@@ -224,7 +275,6 @@ protected:
 	void RMBPressed();
 	void RMBReleased();
 	void MMB();
-	void ESC();
 	void E();
 	void Q();
 	void OnePressed();

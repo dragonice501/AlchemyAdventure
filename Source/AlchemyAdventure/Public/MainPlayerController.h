@@ -23,12 +23,6 @@ public:
 	UUserWidget* HUDOverlay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<UUserWidget> WPauseMenu;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
-	UUserWidget* PauseMenu;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	TSubclassOf<UUserWidget> WLockOnWidget;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
@@ -65,13 +59,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "HUD")
-	void DisplayPauseMenu();
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "HUD")
-	void RemovePauseMenu();
-
-	void TogglePauseMenu();
 	void ToggleInventory(bool Visible);
 
 	void DisplayLockOn(FVector Position);
