@@ -107,6 +107,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> GearSlotOneInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> GearSlotTwoInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> GearSlotThreeInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> GearSlotFourInventory;
+
 	float MaxWalkSpeed = 400.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -154,6 +159,10 @@ public:
 	bool bMobilityModifier = false;
 	float MobilityModifier = 1.f;
 
+	AResource* SetIngredientOne;
+	AResource* SetIngredientTwo;
+	int32 SetIngredientOneIndex;
+	int32 SetIngredientTwoIndex;
 	FName IngredientOneName;
 	FName IngredientTwoName;
 
@@ -203,6 +212,11 @@ public:
 	void EquipWeaponL(int32 Index);
 
 	UFUNCTION(BlueprintCallable)
+	bool RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage);
+	UFUNCTION(BlueprintCallable)
+	void ResetCrafting();
+
+	UFUNCTION(BlueprintCallable)
 	void GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource);
 	UFUNCTION(BlueprintCallable)
 	void GetResourceImage(int32 ResourceStackIndex, UTexture2D*& ResourceImage);
@@ -210,11 +224,11 @@ public:
 	void GetResourceCount(int32 ResourceStackIndex, int32& ResourceCount);
 
 	UFUNCTION(BlueprintCallable)
-	UTexture2D* CheckCanCraft(int32 FirstIndex, int32 SecondIndex);
+	UTexture2D* CheckCanCraft();
 	UFUNCTION(BlueprintCallable)
-	bool AddUsable(int32 FirstIngredient, int32 SecondIngredient);
+	bool AddUsable();
 	UFUNCTION(BlueprintCallable)
-	bool CheckCanCraftMore(int32 FirstIngredientIndex, int32 SecondIngredientIndex);
+	bool CheckCanCraftMore();
 
 	UFUNCTION(BlueprintCallable)
 	UTexture2D* GetEquipmentImage(int32 Index);
@@ -235,6 +249,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex);
+	UFUNCTION(BlueprintCallable)
+	void GetGearStack(int32 StackIndex, int32 SlotIndex);
+	void AddToGearSlot(AUsable* UsableToAdd, int32 SlotIndex);
+	UFUNCTION(BlueprintCallable)
+	void GetGearSlotImageAndCount(int32 SlotIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
+	UFUNCTION(BlueprintCallable)
+	void GetGearInventoryStackImageAndCount(int32 StackIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
 
 	void SortInventory();
 	void QuickSort(TArray<TSubclassOf<AItem>> Inventory, int Left, int Right);
