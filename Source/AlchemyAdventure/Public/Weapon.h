@@ -6,6 +6,10 @@
 #include "Item.h"
 #include "Weapon.generated.h"
 
+class UArrowComponent;
+class UBoxComponent;
+class ABaseCharacter;
+
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
@@ -21,21 +25,18 @@ class ALCHEMYADVENTURE_API AWeapon : public AItem
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UArrowComponent* ArrowComponent;
+	UArrowComponent* ArrowComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USkeletalMeshComponent* Mesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UBoxComponent* CollisionBox;
+	UBoxComponent* AttackCollisionBox;
 
-	class ABaseCharacter* Owner;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UBoxComponent* GuardCollisionBox;
 
-	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	class UDataTable* WeaponPropertiesDataTable;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	FName DataTableRow;*/
+	ABaseCharacter* Owner;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UDamageType> DamageType;
@@ -62,12 +63,18 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	void ActivateCollision();
-	void DeactivateCollision();
+	UFUNCTION()
+	void OnGuardBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	TArray<class ABaseCharacter*> HitCharacters;
+	void ActivateAttackCollision();
+	void DeactivateAttackCollision();
+	void ActivateGuardCollision();
+	void DeactivateGuardCollision();
+
+	TArray<ABaseCharacter*> HitCharacters;
+	TArray<AWeapon*> BlockedWeapons;
 
 	FORCEINLINE ABaseCharacter* GetCharacter() const { return Owner; }
 

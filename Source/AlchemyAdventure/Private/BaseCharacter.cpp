@@ -99,6 +99,16 @@ void ABaseCharacter::ResetStunned()
 	bStunned = false;
 }
 
+void ABaseCharacter::Recoil()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && RecoilMontage)
+	{
+		AnimInstance->Montage_Play(RecoilMontage);
+		AnimInstance->Montage_JumpToSection("");
+	}
+}
+
 void ABaseCharacter::EquipRightHand(TSubclassOf<AWeapon> WeaponToEquip)
 {
 	if (WeaponToEquip)
@@ -165,7 +175,7 @@ void ABaseCharacter::ActivateWeapon()
 {
 	if (RightHandEquipment)
 	{
-		RightHandEquipment->ActivateCollision();
+		RightHandEquipment->ActivateAttackCollision();
 	}
 }
 
@@ -173,7 +183,7 @@ void ABaseCharacter::DeactivateWeapon()
 {
 	if (RightHandEquipment)
 	{
-		RightHandEquipment->DeactivateCollision();
+		RightHandEquipment->DeactivateAttackCollision();
 	}
 }
 

@@ -34,6 +34,9 @@ struct FUsablePropertyTable : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 UsableID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString UsableName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -67,6 +70,9 @@ class ALCHEMYADVENTURE_API AUsable : public AItem
 	GENERATED_BODY()
 	
 public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 UsableID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FString StartingName;

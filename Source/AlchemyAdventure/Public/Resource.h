@@ -23,6 +23,9 @@ struct FResourcePropertyTable : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ResourceID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString ResourceName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -44,6 +47,9 @@ class ALCHEMYADVENTURE_API AResource : public AItem
 	GENERATED_BODY()
 
 public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ResourceID;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FString ResourceName;

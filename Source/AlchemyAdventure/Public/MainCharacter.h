@@ -9,6 +9,9 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastSetImageAndCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastOpenCharacterMenu);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastResetInventoryHUD);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetAttackTimer, bool, bToggleAttackTimer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetDefenseTimer, bool, bToggleDefenseTimer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetMobilityTimer, bool, bToggleMobilityTimer);
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -60,6 +63,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
 	UAnimMontage* UseMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
+	UAnimMontage* GuardMontage;
 
 	FVector InputVector;
 
@@ -145,6 +151,8 @@ public:
 	FTimerHandle ResetStaminaRechargeTimer;
 
 	//Status Effects
+	AUsable* DesiredGearToUse = nullptr;
+	int32 DesiredGearSlot = -1;
 	int32 StatusEffectTime;
 
 	FTimerHandle AttackModifierTimer;
@@ -163,8 +171,8 @@ public:
 	AResource* SetIngredientTwo;
 	int32 SetIngredientOneIndex;
 	int32 SetIngredientTwoIndex;
-	FName IngredientOneName;
-	FName IngredientTwoName;
+	FName UsedIngredientOneName;
+	FName UsedIngredientTwoName;
 
 	//Delegates
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
@@ -175,6 +183,15 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
 	FDynamicMulticastOpenCharacterMenu DynamicMulticastOpenCharacterMenu;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
+	FDynamicMulticastSetAttackTimer DynamicMulticastSetAttackTimer;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
+	FDynamicMulticastSetDefenseTimer DynamicMulticastSetDefenseTimer;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
+	FDynamicMulticastSetMobilityTimer DynamicMulticastSetMobilityTimer;
 
 public:
 	// Sets default values for this character's properties
@@ -211,10 +228,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void EquipWeaponL(int32 Index);
 
+	void QuickSortUsables(TArray<AUsable*> Inventory, int32 Low, int32 High);
+	int32 Partition(TArray<AUsable*> Inventory, int32 Low, int32 High);
+	void TestSwap(int32 i, int32 j);
+
+	void QuickSortDuplicates(TArray<AUsable*> Inventory, int Left, int Right);
+	void PartitionDuplicates(TArray<AUsable*> Arr, int Left, int Right, int i, int j);
+	void Swap(int32 Left, int32 Right);
+
 	UFUNCTION(BlueprintCallable)
 	bool RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage);
 	UFUNCTION(BlueprintCallable)
-	void ResetCrafting();
+	void ResetCraftingIngredients();
 
 	UFUNCTION(BlueprintCallable)
 	void GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource);
@@ -229,6 +254,8 @@ public:
 	bool AddUsable();
 	UFUNCTION(BlueprintCallable)
 	bool CheckCanCraftMore();
+	UFUNCTION(BlueprintCallable)
+	void ResetIngredients();
 
 	UFUNCTION(BlueprintCallable)
 	UTexture2D* GetEquipmentImage(int32 Index);
@@ -237,32 +264,38 @@ public:
 	UTexture2D* GetGearImage(int32 Index, int32& ItemCount);
 
 	void GetGear(int32 Index);
+	UFUNCTION(BlueprintCallable)
+	void UseDesiredGear();
+
 	void SetAttackModifier(int32 Time, float Modifier);
 	void ResetAttackModifier();
+	UFUNCTION(BlueprintCallable)
+	float GetAttackTimeRemaining();
+
 	void SetDefenseModifier(int32 Time, float Modifier);
 	void ResetDefenseModifier();
+	UFUNCTION(BlueprintCallable)
+	float GetDefenseTimeRemaining();
+
 	void SetMobilityModifier(int32 Time, float Modifier);
 	void ResetMobilityModifier();
+	UFUNCTION(BlueprintCallable)
+	float GetMobilityTimeRemaining();
+
 	void Heal(float Amount);
 
 	void PlayUseMontage(FName MontageSection);
 
-	UFUNCTION(BlueprintCallable)
-	void SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex);
-	UFUNCTION(BlueprintCallable)
-	void GetGearStack(int32 StackIndex, int32 SlotIndex);
+	UFUNCTION(BlueprintCallable) void SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex);
+	UFUNCTION(BlueprintCallable) void GetGearStack(int32 StackIndex, int32 SlotIndex);
+	UFUNCTION(BlueprintCallable) void RemoveGearStack(int32 SlotIndex);
 	void AddToGearSlot(AUsable* UsableToAdd, int32 SlotIndex);
-	UFUNCTION(BlueprintCallable)
-	void GetGearSlotImageAndCount(int32 SlotIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
-	UFUNCTION(BlueprintCallable)
-	void GetGearInventoryStackImageAndCount(int32 StackIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
-
-	void SortInventory();
-	void QuickSort(TArray<TSubclassOf<AItem>> Inventory, int Left, int Right);
-	void Partition(TArray<TSubclassOf<AItem>> Arr, int Left, int Right, int i, int j);
-	void Swap(int Left, int Right);
+	UFUNCTION(BlueprintCallable) void SwapGearSlot(int32 FirstSlot, int32 SecondSlot);
+	UFUNCTION(BlueprintCallable) void GetGearSlotImageAndCount(int32 SlotIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
+	UFUNCTION(BlueprintCallable) void GetGearInventoryStackImageAndCount(int32 StackIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
 
 	void Dodge();
+	void Block();
 
 	void SetStaminaRechargeTimer(float RechargeDelay);
 	void ResetStaminaRecharge();

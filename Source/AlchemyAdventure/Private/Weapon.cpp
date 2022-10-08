@@ -20,12 +20,20 @@ AWeapon::AWeapon()
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
 
-	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
-	CollisionBox->SetupAttachment(RootComponent);
-	CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	CollisionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	AttackCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackCollisionBox"));
+	AttackCollisionBox->SetupAttachment(RootComponent);
+	AttackCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AttackCollisionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	AttackCollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	AttackCollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	AttackCollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
+
+	GuardCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("GuardCollisionBox"));
+	GuardCollisionBox->SetupAttachment(RootComponent);
+	GuardCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GuardCollisionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	GuardCollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	GuardCollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
 }
 
 void AWeapon::BuildWeapon()
@@ -38,7 +46,8 @@ void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBeginOverlap);
+	AttackCollisionBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnAttackBeginOverlap);
+	GuardCollisionBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnGuardBeginOverlap);
 }
 
 // Called every frame
@@ -48,7 +57,7 @@ void AWeapon::Tick(float DeltaTime)
 
 }
 
-void AWeapon::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AWeapon::OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor)
 	{
@@ -113,13 +122,41 @@ void AWeapon::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	}
 }
 
-void AWeapon::ActivateCollision()
+void AWeapon::OnGuardBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	if (OtherActor)
+	{
+		AWeapon* OtherWeapon = Cast<AWeapon>(OtherActor);
+		if (OtherWeapon)
+		{
+			OtherWeapon->DeactivateAttackCollision();
+			AMainCharacter* MainCharacter = Cast<AMainCharacter>(Owner);
+			if (MainCharacter)
+			{
+				MainCharacter->Block();
+			}
+		}
+	}
 }
 
-void AWeapon::DeactivateCollision()
+void AWeapon::ActivateAttackCollision()
 {
-	CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AttackCollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+}
+
+void AWeapon::DeactivateAttackCollision()
+{
+	AttackCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HitCharacters.Empty();
+}
+
+void AWeapon::ActivateGuardCollision()
+{
+	GuardCollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+}
+
+void AWeapon::DeactivateGuardCollision()
+{
+	GuardCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BlockedWeapons.Empty();
 }

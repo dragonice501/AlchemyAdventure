@@ -13,6 +13,7 @@ void AUsable::BuildUsable(FName Name)
 		UsableRow = UsableDataTable->FindRow<FUsablePropertyTable>(Name, TEXT(""));
 		if (UsableRow)
 		{
+			UsableID = UsableRow->UsableID;
 			UsableName = UsableRow->UsableName;
 			UsableImage = UsableRow->UsableImage;
 			StatusEffect = UsableRow->StatusEffect;

@@ -35,6 +35,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
 	UAnimMontage* DeathMontage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
+	UAnimMontage* RecoilMontage;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float Health;
 
@@ -69,6 +72,7 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	void Stun();
+	void Recoil();
 
 	UFUNCTION(BlueprintCallable)
 	void ResetStunned();

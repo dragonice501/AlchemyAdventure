@@ -13,6 +13,7 @@ void AResource::BuildResource(FName ItemName)
 		ResourceRow = ResourceDataTable->FindRow<FResourcePropertyTable>(ItemName, TEXT(""));
 		if (ResourceRow)
 		{
+			ResourceID = ResourceRow->ResourceID;
 			ResourceName = ResourceRow->ResourceName;
 			CombinableResources = ResourceRow->CombinableResources;
 			CombineResults = ResourceRow->CombineResults;
@@ -31,7 +32,6 @@ FString AResource::CheckCanCombine(AResource* OtherResource)
 		{
 			if (CombinableResources[i] == OtherResource->ResourceName)
 			{
-				//UE_LOG(LogTemp, Warning, TEXT("%s"), *CombineResults[i]);
 				Result = CombineResults[i];
 				return Result;
 			}
