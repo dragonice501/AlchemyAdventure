@@ -169,6 +169,10 @@ public:
 
 	AResource* SetIngredientOne;
 	AResource* SetIngredientTwo;
+	UPROPERTY(VisibleAnywhere)
+	TArray<AResource*> SetIngredientsOne;
+	UPROPERTY(VisibleAnywhere)
+	TArray<AResource*> SetIngredientsTwo;
 	int32 SetIngredientOneIndex;
 	int32 SetIngredientTwoIndex;
 	FName UsedIngredientOneName;
@@ -216,6 +220,8 @@ public:
 	bool FindBestTargetEnemy();
 	void LockOnEnemy();
 	void UntargetEnemy();
+	UFUNCTION(BlueprintCallable)
+	void ResetState();
 
 	void SwitchMovementStyle(EMovementStyle MovementStyle);
 	void SwitchCameraMovement(ECameraMovement CameraMovement);
@@ -239,7 +245,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage);
 	UFUNCTION(BlueprintCallable)
-	void ResetCraftingIngredients();
+	void ResetCraftingIngredients(bool ResetFirst, bool ResetSecond);
 
 	UFUNCTION(BlueprintCallable)
 	void GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource);

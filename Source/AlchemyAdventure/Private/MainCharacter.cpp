@@ -501,6 +501,11 @@ void AMainCharacter::UntargetEnemy()
 	}
 }
 
+void AMainCharacter::ResetState()
+{
+	bAttacking = bDodging = bStunned = false;
+}
+
 void AMainCharacter::SwitchMovementStyle(EMovementStyle MovementStyle)
 {
 	switch (MovementStyle)
@@ -648,6 +653,24 @@ bool AMainCharacter::RemoveAndSetIngredient(int32 ResourceStackIndex, int32 Reso
 					ResourceImage = CurrentResource->ResourceImage;
 					if (ResourceSelectIndex == 0)
 					{
+						/*if (SetIngredientsOne.Num() > 0)
+						{
+							if (SetIngredientsOne[0]->ResourceName != CurrentResource->ResourceName)
+							{
+								while (SetIngredientsOne.Num() > 0)
+								{
+									ResourceInventory.Add(SetIngredientsOne[0]);
+									SetIngredientsOne.RemoveAt(0);
+								}
+								SetIngredientsOne.Add(CurrentResource);
+								ResourceInventory.Sort();
+							}
+							else
+							{
+								SetIngredientsOne.Add(CurrentResource);
+							}
+						}*/
+
 						SetIngredientOne = CurrentResource;
 						ResourceInventory.RemoveAt(i);
 						ResourceInventory.Sort();
@@ -710,15 +733,15 @@ bool AMainCharacter::RemoveAndSetIngredient(int32 ResourceStackIndex, int32 Reso
 	return false;
 }
 
-void AMainCharacter::ResetCraftingIngredients()
+void AMainCharacter::ResetCraftingIngredients(bool ResetFirst, bool ResetSecond)
 {
-	if (SetIngredientOne)
+	if (SetIngredientOne && ResetFirst)
 	{
 		ResourceInventory.Add(SetIngredientOne);
 		SetIngredientOne = nullptr;
 		UsedIngredientOneName = "";
 	}
-	if (SetIngredientTwo)
+	if (SetIngredientTwo && ResetSecond)
 	{
 		ResourceInventory.Add(SetIngredientTwo);
 		SetIngredientTwo = nullptr;
