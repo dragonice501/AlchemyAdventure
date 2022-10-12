@@ -614,23 +614,6 @@ void AMainCharacter::EquipWeaponL(int32 Index)
 
 bool AMainCharacter::RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage)
 {
-	if (ResourceSelectIndex == 0)
-	{
-		if (SetIngredientOne)
-		{
-			ResourceInventory.Add(SetIngredientOne);
-			SetIngredientOne = nullptr;
-		}
-	}
-	else if (ResourceSelectIndex == 1)
-	{
-		if (SetIngredientTwo)
-		{
-			ResourceInventory.Add(SetIngredientTwo);
-			SetIngredientTwo = nullptr;
-		}
-	}
-
 	int32 Index = 0;
 	int32 ResourceIndex = 0;
 
@@ -646,83 +629,133 @@ bool AMainCharacter::RemoveAndSetIngredient(int32 ResourceStackIndex, int32 Reso
 			else PreviousResource = CurrentResource;
 			CurrentResource = ResourceInventory[i];
 
-			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
+			if (CurrentResource->ResourceName == PreviousResource->ResourceName)
 			{
 				if (Index == ResourceStackIndex)
 				{
 					ResourceImage = CurrentResource->ResourceImage;
 					if (ResourceSelectIndex == 0)
 					{
-						/*if (SetIngredientsOne.Num() > 0)
+						if (SetIngredientsOneInv.Num() > 0)
 						{
-							if (SetIngredientsOne[0]->ResourceName != CurrentResource->ResourceName)
+							if (SetIngredientsOneInv[0]->ResourceName != CurrentResource->ResourceName)
 							{
-								while (SetIngredientsOne.Num() > 0)
+								while (SetIngredientsOneInv.Num() > 0)
 								{
-									ResourceInventory.Add(SetIngredientsOne[0]);
-									SetIngredientsOne.RemoveAt(0);
+									ResourceInventory.Add(SetIngredientsOneInv[0]);
+									SetIngredientsOneInv.RemoveAt(0);
 								}
-								SetIngredientsOne.Add(CurrentResource);
+								SetIngredientsOneInv.Add(CurrentResource);
+								ResourceInventory.RemoveAt(i);
 								ResourceInventory.Sort();
 							}
 							else
 							{
-								SetIngredientsOne.Add(CurrentResource);
+								SetIngredientsOneInv.Add(CurrentResource);
+								ResourceInventory.RemoveAt(ResourceIndex);
 							}
-						}*/
+						}
+						else
+						{
+							SetIngredientsOneInv.Add(CurrentResource);
+							ResourceInventory.RemoveAt(ResourceIndex);
+						}
 
-						SetIngredientOne = CurrentResource;
-						ResourceInventory.RemoveAt(i);
-						ResourceInventory.Sort();
 						return true;
 					}
-					else
+					else if (ResourceSelectIndex == 1)
 					{
-						SetIngredientTwo = CurrentResource;
-						ResourceInventory.RemoveAt(i);
-						ResourceInventory.Sort();
+						if (SetIngredientsTwoInv.Num() > 0)
+						{
+							if (SetIngredientsTwoInv[0]->ResourceName != CurrentResource->ResourceName)
+							{
+								while (SetIngredientsTwoInv.Num() > 0)
+								{
+									ResourceInventory.Add(SetIngredientsTwoInv[0]);
+									SetIngredientsTwoInv.RemoveAt(0);
+								}
+								SetIngredientsTwoInv.Add(CurrentResource);
+								ResourceInventory.RemoveAt(i);
+								ResourceInventory.Sort();
+							}
+							else
+							{
+								SetIngredientsTwoInv.Add(CurrentResource);
+								ResourceInventory.RemoveAt(ResourceIndex);
+							}
+						}
+						else
+						{
+							SetIngredientsTwoInv.Add(CurrentResource);
+							ResourceInventory.RemoveAt(ResourceIndex);
+						}
+
 						return true;
 					}
 				}
-
+			}
+			else if (CurrentResource->ResourceName != PreviousResource->ResourceName)
+			{
 				Index++;
 				if (Index == ResourceStackIndex)
 				{
 					ResourceImage = CurrentResource->ResourceImage;
 					if (ResourceSelectIndex == 0)
 					{
-						SetIngredientOne = CurrentResource;
-						ResourceInventory.RemoveAt(i);
-						ResourceInventory.Sort();
-						return true;
-					}
-					else
-					{
-						SetIngredientTwo = CurrentResource;
-						ResourceInventory.RemoveAt(i);
-						ResourceInventory.Sort();
-						return true;
-					}
-				}
-			}
-			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
-			{
-				if (Index == ResourceStackIndex)
-				{
-					ResourceImage = CurrentResource->ResourceImage;
-					if (ResourceSelectIndex == 0)
-					{
-						SetIngredientOne = CurrentResource;
-						ResourceInventory.RemoveAt(i);
-						ResourceInventory.Sort();
-						return true;
-					}
-					else
-					{
+						if (SetIngredientsOneInv.Num() > 0)
+						{
+							if (SetIngredientsOneInv[0]->ResourceName != CurrentResource->ResourceName)
+							{
+								while (SetIngredientsOneInv.Num() > 0)
+								{
+									ResourceInventory.Add(SetIngredientsOneInv[0]);
+									SetIngredientsOneInv.RemoveAt(0);
+								}
+								SetIngredientsOneInv.Add(CurrentResource);
+								ResourceInventory.RemoveAt(i);
+								ResourceInventory.Sort();
+							}
+							else
+							{
+								SetIngredientsOneInv.Add(CurrentResource);
+								ResourceInventory.RemoveAt(ResourceIndex);
+							}
+						}
+						else
+						{
+							SetIngredientsOneInv.Add(CurrentResource);
+							ResourceInventory.RemoveAt(ResourceIndex);
+						}
 
-						SetIngredientTwo = CurrentResource;
-						ResourceInventory.RemoveAt(i);
-						ResourceInventory.Sort();
+						return true;
+					}
+					else if (ResourceSelectIndex == 1)
+					{
+						if (SetIngredientsTwoInv.Num() > 0)
+						{
+							if (SetIngredientsTwoInv[0]->ResourceName != CurrentResource->ResourceName)
+							{
+								while (SetIngredientsTwoInv.Num() > 0)
+								{
+									ResourceInventory.Add(SetIngredientsTwoInv[0]);
+									SetIngredientsTwoInv.RemoveAt(0);
+								}
+								SetIngredientsTwoInv.Add(CurrentResource);
+								ResourceInventory.RemoveAt(i);
+								ResourceInventory.Sort();
+							}
+							else
+							{
+								SetIngredientsTwoInv.Add(CurrentResource);
+								ResourceInventory.RemoveAt(ResourceIndex);
+							}
+						}
+						else
+						{
+							SetIngredientsTwoInv.Add(CurrentResource);
+							ResourceInventory.RemoveAt(ResourceIndex);
+						}
+
 						return true;
 					}
 				}
@@ -735,17 +768,22 @@ bool AMainCharacter::RemoveAndSetIngredient(int32 ResourceStackIndex, int32 Reso
 
 void AMainCharacter::ResetCraftingIngredients(bool ResetFirst, bool ResetSecond)
 {
-	if (SetIngredientOne && ResetFirst)
+	if (SetIngredientsOneInv.Num() > 0 && ResetFirst)
 	{
-		ResourceInventory.Add(SetIngredientOne);
-		SetIngredientOne = nullptr;
-		UsedIngredientOneName = "";
+		while (SetIngredientsOneInv.Num() > 0)
+		{
+			ResourceInventory.Add(SetIngredientsOneInv[0]);
+			SetIngredientsOneInv.RemoveAt(0);
+		}
 	}
-	if (SetIngredientTwo && ResetSecond)
+
+	if (SetIngredientsTwoInv.Num() > 0 && ResetSecond)
 	{
-		ResourceInventory.Add(SetIngredientTwo);
-		SetIngredientTwo = nullptr;
-		UsedIngredientTwoName = "";
+		while (SetIngredientsTwoInv.Num() > 0)
+		{
+			ResourceInventory.Add(SetIngredientsTwoInv[0]);
+			SetIngredientsTwoInv.RemoveAt(0);
+		}
 	}
 
 	ResourceInventory.Sort();
@@ -910,11 +948,11 @@ UTexture2D* AMainCharacter::CheckCanCraft()
 {
 	UTexture2D* Image = nullptr;
 
-	if (SetIngredientOne)
+	if (SetIngredientsOneInv.Num() > 0)
 	{
-		if (SetIngredientTwo)
+		if (SetIngredientsTwoInv.Num() > 0)
 		{
-			FName Craftable = *SetIngredientOne->CheckCanCombine(SetIngredientTwo);
+			FName Craftable = *SetIngredientsOneInv[0]->CheckCanCombine(SetIngredientsTwoInv[0]);
 			if (Craftable != "")
 			{
 				AUsable* Usable = NewObject<AUsable>();
@@ -936,11 +974,11 @@ UTexture2D* AMainCharacter::CheckCanCraft()
 
 bool AMainCharacter::AddUsable()
 {
-	if (SetIngredientOne)
+	if (SetIngredientsOneInv.Num() > 0)
 	{
-		if (SetIngredientTwo)
+		if (SetIngredientsTwoInv.Num() > 0)
 		{
-			FName Craftable = *SetIngredientOne->CheckCanCombine(SetIngredientTwo);
+			FName Craftable = *SetIngredientsOneInv[0]->CheckCanCombine(SetIngredientsTwoInv[0]);
 			if (Craftable != "")
 			{
 				AUsable* Usable = NewObject<AUsable>();
@@ -949,17 +987,13 @@ bool AMainCharacter::AddUsable()
 					Usable->BuildUsable(Craftable);
 					if (Usable->UsableImage)
 					{
-						Usable->BuildUsable(Craftable);
 						FString Name = Usable->UsableName;
 						Usable->SetActorLabel(Name);
 						UsablesInventory.Add(Usable);
-						//QuickSortUsables(UsablesInventory, 0, UsablesInventory.Num() - 1);
+						//DutchQuickSort(UsablesInventory, 0, UsablesInventory.Num() - 1);
 
-						UsedIngredientOneName = *SetIngredientOne->ResourceName;
-						UsedIngredientTwoName = *SetIngredientTwo->ResourceName;
-
-						SetIngredientOne = nullptr;
-						SetIngredientTwo = nullptr;
+						SetIngredientsOneInv.RemoveAt(0);
+						SetIngredientsTwoInv.RemoveAt(0);
 
 						return true;
 					}
@@ -975,34 +1009,19 @@ bool AMainCharacter::AddUsable()
 
 bool AMainCharacter::CheckCanCraftMore()
 {
-	bool bHasMoreIngredientOne = false;
-	bool bHasMoreIngredientTwo = false;
-
-	if (UsedIngredientOneName != "")
+	if (SetIngredientsOneInv.Num() > 0)
 	{
-		for (int i = 0; i < ResourceInventory.Num(); i++)
+		if (SetIngredientsTwoInv.Num() > 0)
 		{
-			if (*ResourceInventory[i]->ResourceName == UsedIngredientOneName)
+			FName Craftable = *SetIngredientsOneInv[0]->CheckCanCombine(SetIngredientsTwoInv[0]);
+			if (Craftable != "")
 			{
-				bHasMoreIngredientOne = true;
-				break;
+				return true;
 			}
 		}
 	}
 
-	if (UsedIngredientTwoName != "")
-	{
-		for (int i = 0; i < ResourceInventory.Num(); i++)
-		{
-			if (*ResourceInventory[i]->ResourceName == UsedIngredientTwoName)
-			{
-				bHasMoreIngredientTwo = true;
-				break;
-			}
-		}
-	}
-
-	return bHasMoreIngredientOne && bHasMoreIngredientTwo;
+	return false;
 }
 
 void AMainCharacter::ResetIngredients()
@@ -1021,6 +1040,41 @@ void AMainCharacter::ResetIngredients()
 
 	UsedIngredientOneName = "";
 	UsedIngredientTwoName = "";
+}
+
+int32 AMainCharacter::GetIngredientsCount(bool First, bool Second)
+{
+	if (First)
+	{
+		return SetIngredientsOneInv.Num();
+	}
+	
+	if (Second)
+	{
+		return SetIngredientsTwoInv.Num();
+	}
+
+	return 0;
+}
+
+UTexture2D* AMainCharacter::GetIngredientImage(bool First, bool Second)
+{
+	if (First)
+	{
+		if (SetIngredientsOneInv.Num() > 0)
+		{
+			return SetIngredientsOneInv[0]->ResourceImage;
+		}
+	}
+	if (Second)
+	{
+		if (SetIngredientsTwoInv.Num() > 0)
+		{
+			return SetIngredientsTwoInv[0]->ResourceImage;
+		}
+	}
+
+	return nullptr;
 }
 
 UTexture2D* AMainCharacter::GetEquipmentImage(int32 Index)
@@ -1640,34 +1694,27 @@ int32 AMainCharacter::Partition(TArray<AUsable*> Inventory, int32 Low, int32 Hig
 		if (Inventory[j]->UsableID < Pivot->UsableID)
 		{
 			i++;
-			TestSwap(i, j);
+			Swap(i, j);
 		}
 	}
 
-	TestSwap(i + 1, High);
+	Swap(i + 1, High);
 	return i + 1;
 }
 
-void AMainCharacter::TestSwap(int32 i, int32 j)
-{
-	AUsable* Temp = UsablesInventory[i];
-	UsablesInventory[i] = UsablesInventory[j];
-	UsablesInventory[j] = Temp;
-}
-
-void AMainCharacter::QuickSortDuplicates(TArray<AUsable*> Inventory, int Left, int Right)
+void AMainCharacter::DutchQuickSort(TArray<AUsable*> Inventory, int Left, int Right)
 {
 	if (Right <= Left) return;
 
 	int i = 0, j = 0;
 
-	PartitionDuplicates(Inventory, Left, Right, i, j);
+	DutchPartition(Inventory, Left, Right, i, j);
 
-	QuickSortDuplicates(Inventory, Left, j);
-	QuickSortDuplicates(Inventory, i, Right);
+	DutchQuickSort(Inventory, Left, j);
+	DutchQuickSort(Inventory, i, Right);
 }
 
-void AMainCharacter::PartitionDuplicates(TArray<AUsable*> Arr, int Left, int Right, int i, int j)
+void AMainCharacter::DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int i, int j)
 {
 	i = Left - 1;
 	j = Right;
@@ -1676,14 +1723,14 @@ void AMainCharacter::PartitionDuplicates(TArray<AUsable*> Arr, int Left, int Rig
 
 	while (true)
 	{
-		while (Arr[++i]->UsableID < v);
+		while (Arr[i++]->UsableID < v);
 
-		while (v < Arr[--j]->UsableID)
-			if (j == Left)
-				break;
+		while (v < Arr[j--]->UsableID)
+		{
+			if (j == Left) break;
+		}
 
-		if (i >= j)
-			break;
+		if (i >= j) break;
 
 		Swap(i, j);
 
@@ -1704,18 +1751,22 @@ void AMainCharacter::PartitionDuplicates(TArray<AUsable*> Arr, int Left, int Rig
 
 	j = i - 1;
 	for (int k = Left; k < p; k++, j--)
+	{
 		Swap(k, j);
+	}
 
 	i = i + 1;
 	for (int k = Right - 1; k > q; k--, i++)
+	{
 		Swap(i, k);
+	}
 }
 
-void AMainCharacter::Swap(int32 Left, int32 Right)
+void AMainCharacter::Swap(int32 i, int32 j)
 {
-	AUsable* Temp = UsablesInventory[Left];
-	UsablesInventory[Left] = UsablesInventory[Right];
-	UsablesInventory[Right] = Temp;
+	AUsable* Temp = UsablesInventory[i];
+	UsablesInventory[i] = UsablesInventory[j];
+	UsablesInventory[j] = Temp;
 }
 
 void AMainCharacter::Dodge()

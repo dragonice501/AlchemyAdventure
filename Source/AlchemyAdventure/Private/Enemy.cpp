@@ -142,7 +142,6 @@ void AEnemy::LookAtTarget()
 
 void AEnemy::ShowHealthBar_Implementation(bool Locked)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("AEnemy::ShowHealthBar_Implementation()"))
 	GetWorldTimerManager().ClearTimer(HealthBarTimer);
 	GetWorldTimerManager().SetTimer(HealthBarTimer, this, &AEnemy::HideHealthBar, HealthBarDisplayTime);
 }

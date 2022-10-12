@@ -170,9 +170,9 @@ public:
 	AResource* SetIngredientOne;
 	AResource* SetIngredientTwo;
 	UPROPERTY(VisibleAnywhere)
-	TArray<AResource*> SetIngredientsOne;
+	TArray<AResource*> SetIngredientsOneInv;
 	UPROPERTY(VisibleAnywhere)
-	TArray<AResource*> SetIngredientsTwo;
+	TArray<AResource*> SetIngredientsTwoInv;
 	int32 SetIngredientOneIndex;
 	int32 SetIngredientTwoIndex;
 	FName UsedIngredientOneName;
@@ -236,11 +236,10 @@ public:
 
 	void QuickSortUsables(TArray<AUsable*> Inventory, int32 Low, int32 High);
 	int32 Partition(TArray<AUsable*> Inventory, int32 Low, int32 High);
-	void TestSwap(int32 i, int32 j);
+	void Swap(int32 i, int32 j);
 
-	void QuickSortDuplicates(TArray<AUsable*> Inventory, int Left, int Right);
-	void PartitionDuplicates(TArray<AUsable*> Arr, int Left, int Right, int i, int j);
-	void Swap(int32 Left, int32 Right);
+	void DutchQuickSort(TArray<AUsable*> Inventory, int Left, int Right);
+	void DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int i, int j);
 
 	UFUNCTION(BlueprintCallable)
 	bool RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage);
@@ -262,6 +261,10 @@ public:
 	bool CheckCanCraftMore();
 	UFUNCTION(BlueprintCallable)
 	void ResetIngredients();
+	UFUNCTION(BlueprintCallable)
+	int32 GetIngredientsCount(bool First, bool Second);
+	UFUNCTION(BlueprintCallable)
+	UTexture2D* GetIngredientImage(bool First, bool Second);
 
 	UFUNCTION(BlueprintCallable)
 	UTexture2D* GetEquipmentImage(int32 Index);
