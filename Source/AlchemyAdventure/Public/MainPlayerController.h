@@ -70,6 +70,11 @@ public:
 	void DisplayStats();
 	void RemoveStats();
 
+	UFUNCTION(BlueprintCallable)
+	void SaveGame();
+	UFUNCTION(BlueprintCallable)
+	void LoadGame();
+
 protected:
 
 	virtual void BeginPlay() override;

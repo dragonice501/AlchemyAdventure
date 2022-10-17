@@ -6,6 +6,11 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
+class UParticleSystem;
+class USoundBase;
+class UAnimMontage;
+class AWeapon;
+
 UCLASS()
 class ALCHEMYADVENTURE_API ABaseCharacter : public ACharacter
 {
@@ -14,10 +19,10 @@ class ALCHEMYADVENTURE_API ABaseCharacter : public ACharacter
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	class UParticleSystem* HitParticles;
+	UParticleSystem* HitParticles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	class USoundBase* HitSound;
+	USoundBase* HitSound;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
 	bool bAttacking;
@@ -27,7 +32,7 @@ public:
 	bool bStunned = false;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
-	class UAnimMontage* AttackMontage;
+	UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
 	UAnimMontage* HurtMontage;
@@ -44,14 +49,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Stats")
 	float MaxHealth;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
-	int32 XP;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	AWeapon* RightHandEquipment = nullptr;
+	int32 RighHandIndex = -1;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class AWeapon* RightHandEquipment = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class AWeapon* LeftHandEquipment = nullptr;
+	AWeapon* LeftHandEquipment = nullptr;
+	int32 LeftHandIndex = -1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<AWeapon> StartingWeapon;
@@ -71,14 +75,13 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	void Stun();
+	virtual void Stun();
 	void Recoil();
 
 	UFUNCTION(BlueprintCallable)
 	void ResetStunned();
 
 	virtual void Die(AActor* Causer);
-
 	UFUNCTION(BlueprintCallable)
 	virtual void DeathEnd();
 

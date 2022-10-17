@@ -33,7 +33,7 @@ struct FUsablePropertyTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable")
 	int32 UsableID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -71,30 +71,17 @@ class ALCHEMYADVENTURE_API AUsable : public AItem
 	
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UsableID;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FString StartingName;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FString UsableName;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UTexture2D* UsableImage;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	EUsableElement UsableType;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	EStatusEffect StatusEffect;
-
-	int32 StatusEffectTime;
-
-	float AttackModifier;
-	float HealAmount;
-	float DefenseModifier;
-	float MobilityModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") FString StartingName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") int32 UsableID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") FString UsableName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") UTexture2D* UsableImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") EUsableElement UsableType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") EStatusEffect StatusEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") int32 StatusEffectTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float AttackModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float HealAmount;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float DefenseModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float MobilityModifier;
 
 public:
 

@@ -43,7 +43,6 @@ AMainCharacter::AMainCharacter()
 
 	Health = 85.f;
 	MaxHealth = 100.f;
-	XP = 0;
 }
 
 // Called when the game starts or when spawned
@@ -297,7 +296,7 @@ void AMainCharacter::Q()
 
 void AMainCharacter::OnePressed()
 {
-	if (GearSlotOneInventory.Num() > 0 && !bInventoryOpen && !bUsing)
+	if (GearSlotOneInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned && !bBlocking)
 	{
 		GetGear(0);
 	}
@@ -305,7 +304,7 @@ void AMainCharacter::OnePressed()
 
 void AMainCharacter::TwoPressed()
 {
-	if (GearSlotTwoInventory.Num() > 0 && !bInventoryOpen && !bUsing)
+	if (GearSlotTwoInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
 		GetGear(1);
 	}
@@ -313,7 +312,7 @@ void AMainCharacter::TwoPressed()
 
 void AMainCharacter::ThreePressed()
 {
-	if (GearSlotThreeInventory.Num() > 0 && !bInventoryOpen && !bUsing)
+	if (GearSlotThreeInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
 		GetGear(2);
 	}
@@ -321,7 +320,7 @@ void AMainCharacter::ThreePressed()
 
 void AMainCharacter::FourPressed()
 {
-	if (GearSlotFourInventory.Num() > 0 && !bInventoryOpen && !bUsing)
+	if (GearSlotFourInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
 		GetGear(3);
 	}
@@ -503,7 +502,7 @@ void AMainCharacter::UntargetEnemy()
 
 void AMainCharacter::ResetState()
 {
-	bAttacking = bDodging = bStunned = false;
+	bAttacking = bDodging = bStunned = bUsing = false;
 }
 
 void AMainCharacter::SwitchMovementStyle(EMovementStyle MovementStyle)
@@ -585,11 +584,13 @@ void AMainCharacter::EquipWeaponR(int32 Index)
 		if (EquipmentInventory[Index])
 		{
 			Super::EquipRightHand(EquipmentInventory[Index]);
+			RighHandIndex = Index;
 		}
 	}
 	else
 	{
 		Super::EquipRightHand(nullptr);
+		RighHandIndex = -1;
 	}
 }
 
@@ -955,12 +956,14 @@ UTexture2D* AMainCharacter::CheckCanCraft()
 			FName Craftable = *SetIngredientsOneInv[0]->CheckCanCombine(SetIngredientsTwoInv[0]);
 			if (Craftable != "")
 			{
+				UE_LOG(LogTemp, Warning, TEXT("%s"), *Craftable.ToString());
 				AUsable* Usable = NewObject<AUsable>();
 				if (Usable)
 				{
 					Usable->BuildUsable(Craftable);
 					if (Usable->UsableImage)
 					{
+						UE_LOG(LogTemp, Warning, TEXT("Image"));
 						Image = Usable->UsableImage;
 						return Image;
 					}
@@ -985,18 +988,16 @@ bool AMainCharacter::AddUsable()
 				if (Usable)
 				{
 					Usable->BuildUsable(Craftable);
-					if (Usable->UsableImage)
-					{
-						FString Name = Usable->UsableName;
-						Usable->SetActorLabel(Name);
-						UsablesInventory.Add(Usable);
-						//DutchQuickSort(UsablesInventory, 0, UsablesInventory.Num() - 1);
+					AUsable* UsableToAdd = Cast<AUsable>(PotionMap[Usable->UsableID]->GetDefaultObject());
+					FString Name = UsableToAdd->UsableName;
+					UsableToAdd->SetActorLabel(Name);
+					UsablesInventory.Add(UsableToAdd);
+					//DutchQuickSort(UsablesInventory, 0, UsablesInventory.Num() - 1);
 
-						SetIngredientsOneInv.RemoveAt(0);
-						SetIngredientsTwoInv.RemoveAt(0);
+					SetIngredientsOneInv.RemoveAt(0);
+					SetIngredientsTwoInv.RemoveAt(0);
 
-						return true;
-					}
+					return true;
 				}
 			}
 		}
@@ -1864,6 +1865,15 @@ void AMainCharacter::Block()
 		UseStamina(15.f, 2.f);
 		bStaminaCanRecharge = false;
 	}
+}
+
+void AMainCharacter::Stun()
+{
+	Super::Stun();
+
+	bUsing = false;
+	bDodging = false;
+	ResetCombo();
 }
 
 void AMainCharacter::ResetDodge()

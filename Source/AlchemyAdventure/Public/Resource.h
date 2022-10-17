@@ -10,6 +10,7 @@
 UENUM(BlueprintType)
 enum class EResourceElement : uint8
 {
+	ERE_None UMETA(DisplayName = "None"),
 	ERE_Air UMETA(DisplayName = "Air"),
 	ERE_Water UMETA(DisplayName = "Water"),
 	ERE_Earth UMETA(DisplayName = "Earth"),
@@ -48,11 +49,11 @@ class ALCHEMYADVENTURE_API AResource : public AItem
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 ResourceID;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FString ResourceName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ResourceID;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<FString> CombinableResources;

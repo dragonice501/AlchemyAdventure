@@ -8,6 +8,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "MainCharacter.h"
 #include "Weapon.h"
+#include "Pickup.h"
 
 AEnemy::AEnemy()
 {
@@ -29,11 +30,22 @@ void AEnemy::BeginPlay()
 
 	AttackSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::AttackSphereBeginOverlap);
 	AttackSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::AttackSphereEndOverlap);
+
+	StartPosition = GetActorLocation();
 }
 
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (TargetCharacter)
+	{
+		float Distance = FVector::DistSquared(GetActorLocation(), StartPosition);
+		if (Distance > MaxChaseDistance * MaxChaseDistance)
+		{
+			SetTargetCharacter(TargetCharacter, false);
+		}
+	}
 }
 
 void AEnemy::SetTargetCharacter(class AMainCharacter* MainCharacter, bool Seen)
@@ -71,11 +83,33 @@ void AEnemy::SetDead()
 	}
 }
 
+void AEnemy::Die(AActor* Causer)
+{
+	Super::Die(Causer);
+}
+
 void AEnemy::DeathEnd()
 {
 	if (RightHandEquipment)
 	{
 		RightHandEquipment->Destroy();
+	}
+
+	if (DropItem)
+	{
+		FHitResult HitResult;
+		FVector Start = GetActorLocation();
+		FVector End = GetActorLocation() + FVector::DownVector * 1000;
+		FCollisionQueryParams CollisionQueryParams;
+		CollisionQueryParams.AddIgnoredActor(this);
+		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, CollisionQueryParams);
+		if (HitResult.bBlockingHit)
+		{
+			FVector DropPosition = HitResult.Location;
+			AActor* Drop = GetWorld()->SpawnActor(DropItem);
+			Drop->SetActorLocationAndRotation(DropPosition, FQuat{ 0 });
+		}
+		
 	}
 
 	Super::DeathEnd();

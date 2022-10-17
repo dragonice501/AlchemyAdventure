@@ -5,6 +5,10 @@
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
+#include "AlchemyAdventureSaveGame.h"
+#include "MainCharacter.h"
+#include "Weapon.h"
+#include "Usable.h"
 
 void AMainPlayerController::BeginPlay()
 {
@@ -44,7 +48,6 @@ void AMainPlayerController::BeginPlay()
 		{
 			PlayerInventoryWidget->AddToViewport();
 			PlayerInventoryWidget->SetVisibility(ESlateVisibility::Hidden);
-			//PlayerInventoryWidget->
 		}
 	}
 
@@ -153,5 +156,54 @@ void AMainPlayerController::RemoveStats()
 	if (PlayerStatsWidget)
 	{
 		PlayerStatsWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void AMainPlayerController::SaveGame()
+{
+	UAlchemyAdventureSaveGame* SaveGameInstance = Cast<UAlchemyAdventureSaveGame>(UGameplayStatics::CreateSaveGameObject(UAlchemyAdventureSaveGame::StaticClass()));
+	AMainCharacter* MainCharacter = Cast<AMainCharacter>(GetCharacter());
+
+	if (SaveGameInstance && MainCharacter)
+	{
+		SaveGameInstance->LevelToLoad = UGameplayStatics::GetCurrentLevelName(this);
+		SaveGameInstance->PlayerLocation = MainCharacter->GetActorLocation();
+		SaveGameInstance->PlayerRotation = MainCharacter->GetActorRotation();
+		SaveGameInstance->Health = MainCharacter->Health;
+		SaveGameInstance->EquipmentInventory = MainCharacter->EquipmentInventory;
+		SaveGameInstance->RightHandIndex = MainCharacter->RighHandIndex;
+		SaveGameInstance->ResourceInventory = MainCharacter->ResourceInventory;
+		SaveGameInstance->UsablesInventory = MainCharacter->UsablesInventory;
+		SaveGameInstance->GearSlotOneInventory = MainCharacter->GearSlotOneInventory;
+		SaveGameInstance->GearSlotTwoInventory = MainCharacter->GearSlotTwoInventory;
+		SaveGameInstance->GearSlotThreeInventory = MainCharacter->GearSlotThreeInventory;
+		SaveGameInstance->GearSlotFourInventory = MainCharacter->GearSlotFourInventory;
+
+		UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->PlayerName, SaveGameInstance->UserSlot);
+	}
+}
+
+void AMainPlayerController::LoadGame()
+{
+	UAlchemyAdventureSaveGame* LoadGameInstance = Cast<UAlchemyAdventureSaveGame>(UGameplayStatics::CreateSaveGameObject(UAlchemyAdventureSaveGame::StaticClass()));
+	LoadGameInstance = Cast<UAlchemyAdventureSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->PlayerName, LoadGameInstance->UserSlot));
+	AMainCharacter* MainCharacter = Cast<AMainCharacter>(GetCharacter());
+
+	if (LoadGameInstance && MainCharacter)
+	{
+		MainCharacter->Q();
+		MainCharacter->SetActorLocation(LoadGameInstance->PlayerLocation);
+		MainCharacter->SetActorRotation(LoadGameInstance->PlayerRotation);
+
+		MainCharacter->Health = LoadGameInstance->Health;
+		MainCharacter->EquipmentInventory = LoadGameInstance->EquipmentInventory;
+		MainCharacter->RighHandIndex = LoadGameInstance->RightHandIndex;
+		if (MainCharacter->RighHandIndex != -1) MainCharacter->EquipWeaponR(MainCharacter->RighHandIndex);
+		MainCharacter->ResourceInventory = LoadGameInstance->ResourceInventory;
+		MainCharacter->UsablesInventory = LoadGameInstance->UsablesInventory;
+		MainCharacter->GearSlotOneInventory = LoadGameInstance->GearSlotOneInventory;
+		MainCharacter->GearSlotTwoInventory = LoadGameInstance->GearSlotTwoInventory;
+		MainCharacter->GearSlotThreeInventory = LoadGameInstance->GearSlotThreeInventory;
+		MainCharacter->GearSlotFourInventory = LoadGameInstance->GearSlotFourInventory;
 	}
 }

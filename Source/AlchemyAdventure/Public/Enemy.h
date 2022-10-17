@@ -6,9 +6,13 @@
 #include "BaseCharacter.h"
 #include "Enemy.generated.h"
 
-/**
- * 
- */
+class UArrowComponent;
+class USphereComponent;
+class UBehaviorTree;
+class AEnemyController;
+class AMainCharacter;
+class APickup;
+
 UCLASS()
 class ALCHEMYADVENTURE_API AEnemy : public ABaseCharacter
 {
@@ -17,15 +21,15 @@ class ALCHEMYADVENTURE_API AEnemy : public ABaseCharacter
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	class UArrowComponent* LockOnPosition;
+	UArrowComponent* LockOnPosition;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	class USphereComponent* AttackSphere;
+	USphereComponent* AttackSphere;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	class UBehaviorTree* BehaviorTree;
+	UBehaviorTree* BehaviorTree;
 
-	class AEnemyController* EnemyController;
+	AEnemyController* EnemyController;
 
 	float AttackMinTime = 0.5f;
 
@@ -39,7 +43,7 @@ public:
 	bool bInAttackRange = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class AMainCharacter* TargetCharacter;
+	AMainCharacter* TargetCharacter;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString LockOnBoneName;
@@ -47,6 +51,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTimerHandle HealthBarTimer;
 	float HealthBarDisplayTime = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxChaseDistance;
+
+	FVector StartPosition;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<APickup> DropItem;
 
 public:
 
@@ -61,7 +73,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTargetLastLocation(FVector Location);
 
-	/*virtual void Die(AActor* Causer) override;*/
+	virtual void Die(AActor* Causer) override;
 	virtual void DeathEnd() override;
 	void SetDead();
 

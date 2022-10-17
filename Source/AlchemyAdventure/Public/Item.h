@@ -16,6 +16,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
 	UTexture2D* ItemImage;
 
+	int32 ItemID;
+
 public:
 
 	AItem();

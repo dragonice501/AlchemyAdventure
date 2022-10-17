@@ -87,11 +87,6 @@ void ABaseCharacter::Stun()
 	}
 
 	bAttacking = false;
-	AMainCharacter* MainCharacter = Cast<AMainCharacter>(this);
-	if (MainCharacter)
-	{
-		MainCharacter->ResetCombo();
-	}
 }
 
 void ABaseCharacter::ResetStunned()

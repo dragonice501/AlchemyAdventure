@@ -103,6 +103,9 @@ public:
 	TArray<TSubclassOf<AUsable>> StartingUsables;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<AUsable>> PotionMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<APickup*> OverlappingPickups;
 	APickup* CurrentPickup;
 	bool bCanPickup = false;
@@ -120,31 +123,20 @@ public:
 
 	float MaxWalkSpeed = 400.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float MaxLockOnDistance = 2000.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) float MaxLockOnDistance = 2000.f;
 	bool bFaceTarget = true;
 	bool bCanDodge = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bDodging = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool bInvincible = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bBlocking = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) bool bDodging = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite) bool bInvincible = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) bool bBlocking = false;
 
 	bool bInventoryOpen = false;
 	FRotator CameraFixedRotation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Stamina = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MaxStamina = 100.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float StaminaRechargeRate = 25.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float Stamina = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float MaxStamina = 100.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float StaminaRechargeRate = 25.f;
 
 	bool bStaminaCanRecharge = true;
 
@@ -169,10 +161,8 @@ public:
 
 	AResource* SetIngredientOne;
 	AResource* SetIngredientTwo;
-	UPROPERTY(VisibleAnywhere)
-	TArray<AResource*> SetIngredientsOneInv;
-	UPROPERTY(VisibleAnywhere)
-	TArray<AResource*> SetIngredientsTwoInv;
+	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsOneInv;
+	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsTwoInv;
 	int32 SetIngredientOneIndex;
 	int32 SetIngredientTwoIndex;
 	FName UsedIngredientOneName;
@@ -212,7 +202,6 @@ public:
 
 	void SetHealth(float Amount);
 	FORCEINLINE void SetMaxHealth(float Amount) { MaxHealth = Amount; }
-	FORCEINLINE void AddXP(int32 AddedXP) { XP += AddedXP; }
 
 	void CheckOverlappingPickups();
 	void SetPickups(APickup* Pickup, bool Overlapped);
@@ -305,6 +294,7 @@ public:
 
 	void Dodge();
 	void Block();
+	virtual void Stun() override;
 
 	void SetStaminaRechargeTimer(float RechargeDelay);
 	void ResetStaminaRecharge();
@@ -327,6 +317,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetCombo();
 
+	void Q();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -339,7 +331,7 @@ protected:
 	void RMBReleased();
 	void MMB();
 	void E();
-	void Q();
+	
 	void OnePressed();
 	void TwoPressed();
 	void ThreePressed();
