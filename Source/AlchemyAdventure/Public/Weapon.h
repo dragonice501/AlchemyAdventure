@@ -41,17 +41,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UDamageType> DamageType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	EWeaponType WeaponType;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	float Damage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	float StaminaCost;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	float StaminRechargeDelay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") EWeaponType WeaponType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float Damage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float StaminaCost;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float StaminRechargeDelay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float PoiseCost;
 	
 public:	
 	// Sets default values for this actor's properties

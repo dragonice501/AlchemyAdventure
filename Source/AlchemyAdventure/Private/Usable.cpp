@@ -9,12 +9,10 @@ void AUsable::BuildUsable(FName Name)
 	UDataTable* UsableDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *UsableTablePath));
 	if (UsableDataTable)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Table"));
 		FUsablePropertyTable* UsableRow = nullptr;
 		UsableRow = UsableDataTable->FindRow<FUsablePropertyTable>(Name, TEXT(""));
 		if (UsableRow)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Row"));
 			UsableID = UsableRow->UsableID;
 			UsableName = UsableRow->UsableName;
 			UsableImage = UsableRow->UsableImage;

@@ -32,7 +32,6 @@ void ABaseCharacter::BeginPlay()
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -65,18 +64,41 @@ float ABaseCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& 
 	else
 	{
 		Health -= DamageAmount;
+	}
 
-		float StunValue = FMath::FRandRange(0.f, 100.f);
-		if (StunValue < 75.f)
-		{
-			Stun();
-		}
+	AWeapon* Weapon = Cast<AWeapon>(DamageCauser);
+	if (Weapon)
+	{
+		DepletePoise(Weapon->PoiseCost);
 	}
 
 	return DamageAmount;
 }
 
-void ABaseCharacter::Stun()
+void ABaseCharacter::DepletePoise(float Cost)
+{
+	Poise -= Cost;
+	if (Poise <= 0.f)
+	{
+		Poise = MaxPoise;
+		Stagger();
+		return;
+	}
+	SetPoiseRechargeTimer();
+}
+
+void ABaseCharacter::SetPoiseRechargeTimer()
+{
+	GetWorldTimerManager().ClearTimer(ResetPoiseRechargeTimer);
+	GetWorldTimerManager().SetTimer(ResetPoiseRechargeTimer, this, &ABaseCharacter::ResetPoise, 5.0f);
+}
+
+void ABaseCharacter::ResetPoise()
+{
+	Poise = MaxPoise;
+}
+
+void ABaseCharacter::Stagger()
 {
 	bStunned = true;
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();

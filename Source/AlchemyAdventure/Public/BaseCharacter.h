@@ -18,50 +18,34 @@ class ALCHEMYADVENTURE_API ABaseCharacter : public ACharacter
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	UParticleSystem* HitParticles;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	USoundBase* HitSound;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
-	bool bAttacking;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
-	float StunChance;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") UParticleSystem* HitParticles;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") USoundBase* HitSound;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") bool bAttacking;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") float StunChance;
 	bool bStunned = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
-	UAnimMontage* AttackMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* AttackMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* HurtMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* DeathMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* RecoilMontage;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
-	UAnimMontage* HurtMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float Health;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float MaxHealth;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float Poise;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float MaxPoise;
+	FTimerHandle ResetPoiseRechargeTimer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") bool bIsDead = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
-	UAnimMontage* DeathMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
-	UAnimMontage* RecoilMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float Health;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Stats")
-	float MaxHealth;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment")
 	AWeapon* RightHandEquipment = nullptr;
 	int32 RighHandIndex = -1;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment")
 	AWeapon* LeftHandEquipment = nullptr;
 	int32 LeftHandIndex = -1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment")
 	TSubclassOf<AWeapon> StartingWeapon;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bIsDead = false;
 
 public:
 	// Sets default values for this character's properties
@@ -75,7 +59,11 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	virtual void Stun();
+	void DepletePoise(float Cost);
+	void SetPoiseRechargeTimer();
+	void ResetPoise();
+
+	virtual void Stagger();
 	void Recoil();
 
 	UFUNCTION(BlueprintCallable)

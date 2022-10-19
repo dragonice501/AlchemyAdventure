@@ -245,7 +245,7 @@ void AMainCharacter::E()
 				{
 					Resource->BuildResource(CurrentPickup->ItemName);
 					FString Name = Resource->ResourceName;
-					Resource->SetActorLabel(Name);
+					//Resource->SetActorLabel(Name);
 					ResourceInventory.Add(Resource);
 					ResourceInventory.Sort();
 
@@ -956,14 +956,12 @@ UTexture2D* AMainCharacter::CheckCanCraft()
 			FName Craftable = *SetIngredientsOneInv[0]->CheckCanCombine(SetIngredientsTwoInv[0]);
 			if (Craftable != "")
 			{
-				UE_LOG(LogTemp, Warning, TEXT("%s"), *Craftable.ToString());
 				AUsable* Usable = NewObject<AUsable>();
 				if (Usable)
 				{
 					Usable->BuildUsable(Craftable);
 					if (Usable->UsableImage)
 					{
-						UE_LOG(LogTemp, Warning, TEXT("Image"));
 						Image = Usable->UsableImage;
 						return Image;
 					}
@@ -990,7 +988,7 @@ bool AMainCharacter::AddUsable()
 					Usable->BuildUsable(Craftable);
 					AUsable* UsableToAdd = Cast<AUsable>(PotionMap[Usable->UsableID]->GetDefaultObject());
 					FString Name = UsableToAdd->UsableName;
-					UsableToAdd->SetActorLabel(Name);
+					//UsableToAdd->SetActorLabel(Name);
 					UsablesInventory.Add(UsableToAdd);
 					//DutchQuickSort(UsablesInventory, 0, UsablesInventory.Num() - 1);
 
@@ -1003,8 +1001,6 @@ bool AMainCharacter::AddUsable()
 		}
 	}
 
-	UsedIngredientOneName = "";
-	UsedIngredientTwoName = "";
 	return false;
 }
 
@@ -1023,24 +1019,6 @@ bool AMainCharacter::CheckCanCraftMore()
 	}
 
 	return false;
-}
-
-void AMainCharacter::ResetIngredients()
-{
-	if (SetIngredientOne)
-	{
-		ResourceInventory.Add(SetIngredientOne);
-		SetIngredientOne = nullptr;
-	}
-	if (SetIngredientTwo)
-	{
-		ResourceInventory.Add(SetIngredientTwo);
-		SetIngredientTwo = nullptr;
-	}
-	ResourceInventory.Sort();
-
-	UsedIngredientOneName = "";
-	UsedIngredientTwoName = "";
 }
 
 int32 AMainCharacter::GetIngredientsCount(bool First, bool Second)
@@ -1867,9 +1845,9 @@ void AMainCharacter::Block()
 	}
 }
 
-void AMainCharacter::Stun()
+void AMainCharacter::Stagger()
 {
-	Super::Stun();
+	Super::Stagger();
 
 	bUsing = false;
 	bDodging = false;

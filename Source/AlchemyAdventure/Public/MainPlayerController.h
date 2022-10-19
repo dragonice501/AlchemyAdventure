@@ -16,38 +16,21 @@ class ALCHEMYADVENTURE_API AMainPlayerController : public APlayerController
 	
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<class UUserWidget> HUDOverlayAsset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") TSubclassOf<class UUserWidget> HUDOverlayAsset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") UUserWidget* HUDOverlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	UUserWidget* HUDOverlay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") TSubclassOf<UUserWidget> WLockOnWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") UUserWidget* LockOnWidget;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<UUserWidget> WLockOnWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") TSubclassOf<UUserWidget> WPickupPromptWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") UUserWidget* PickupPromptWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") FString PickupPromptText = "";
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
-	UUserWidget* LockOnWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") TSubclassOf<UUserWidget> WPlayerInventoryWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") UUserWidget* PlayerInventoryWidget;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<UUserWidget> WPickupPromptWidget;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
-	UUserWidget* PickupPromptWidget;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widgets")
-	FString PickupPromptText = "";
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<UUserWidget> WPlayerInventoryWidget;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
-	UUserWidget* PlayerInventoryWidget;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<UUserWidget> WPlayerStatsWidget;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
-	UUserWidget* PlayerStatsWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") TSubclassOf<UUserWidget> WPlayerStatsWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets") UUserWidget* PlayerStatsWidget;
 
 	FVector LockOnPosition;
 

@@ -43,70 +43,39 @@ class ALCHEMYADVENTURE_API AMainCharacter : public ABaseCharacter
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	USpringArmComponent* SpringArm;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) USpringArmComponent* SpringArm;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) float SpringArmDefaultLength = 500.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) UCameraComponent* Camera;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) USphereComponent* EnemyDetectionSphere;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float SpringArmDefaultLength = 500.f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) AMainPlayerController* MainPlayerController;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UCameraComponent* Camera;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	USphereComponent* EnemyDetectionSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Controller")
-	AMainPlayerController* MainPlayerController;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
-	UAnimMontage* DodgeMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
-	UAnimMontage* UseMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
-	UAnimMontage* GuardMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* DodgeMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* UseMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* GuardMontage;
 
 	FVector InputVector;
 
 	AEnemy* TargetEnemy = nullptr;
 	FVector EnemyLockOnPosition;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float RotatingActorRotate = 180.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float RotatingActorRotate = 180.f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat") bool bLockedOn = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") bool bUsing = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") bool bCanCombo = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") int32 ComboCount = 1;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat") bool bDodging = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") bool bInvincible = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat") bool bBlocking = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bLockedOn = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<TSubclassOf<AWeapon>> EquipmentInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AResource*> ResourceInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> UsablesInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<TSubclassOf<AUsable>> StartingUsables;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<TSubclassOf<AUsable>> PotionMap;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool bUsing = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanCombo = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 ComboCount = 1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AItem>PickupItem;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSubclassOf<AWeapon>> EquipmentInventory;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<AResource*> ResourceInventory;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<AUsable*> UsablesInventory;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSubclassOf<AUsable>> StartingUsables;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSubclassOf<AUsable>> PotionMap;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<APickup*> OverlappingPickups;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<APickup*> OverlappingPickups;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AItem>PickupItem;
 	APickup* CurrentPickup;
 	bool bCanPickup = false;
 	int32 PickupsCount = 0;
@@ -116,10 +85,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> GearSlotOneInventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> GearSlotTwoInventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> GearSlotThreeInventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> GearSlotFourInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotOneInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotTwoInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotThreeInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotFourInventory;
 
 	float MaxWalkSpeed = 400.f;
 
@@ -127,19 +96,13 @@ public:
 	bool bFaceTarget = true;
 	bool bCanDodge = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) bool bDodging = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite) bool bInvincible = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) bool bBlocking = false;
-
 	bool bInventoryOpen = false;
 	FRotator CameraFixedRotation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float Stamina = 0.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float MaxStamina = 100.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float StaminaRechargeRate = 25.f;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float Stamina = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float MaxStamina = 100.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float StaminaRechargeRate = 25.f;
 	bool bStaminaCanRecharge = true;
-
 	FTimerHandle ResetStaminaRechargeTimer;
 
 	//Status Effects
@@ -159,14 +122,8 @@ public:
 	bool bMobilityModifier = false;
 	float MobilityModifier = 1.f;
 
-	AResource* SetIngredientOne;
-	AResource* SetIngredientTwo;
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsOneInv;
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsTwoInv;
-	int32 SetIngredientOneIndex;
-	int32 SetIngredientTwoIndex;
-	FName UsedIngredientOneName;
-	FName UsedIngredientTwoName;
 
 	//Delegates
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
@@ -218,48 +175,30 @@ public:
 
 	void LookAtInventory();
 
-	UFUNCTION(BlueprintCallable)
-	void EquipWeaponR(int32 Index);
-	UFUNCTION(BlueprintCallable)
-	void EquipWeaponL(int32 Index);
+	UFUNCTION(BlueprintCallable) void EquipWeaponR(int32 Index);
+	UFUNCTION(BlueprintCallable) void EquipWeaponL(int32 Index);
 
 	void QuickSortUsables(TArray<AUsable*> Inventory, int32 Low, int32 High);
 	int32 Partition(TArray<AUsable*> Inventory, int32 Low, int32 High);
 	void Swap(int32 i, int32 j);
-
 	void DutchQuickSort(TArray<AUsable*> Inventory, int Left, int Right);
 	void DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int i, int j);
 
-	UFUNCTION(BlueprintCallable)
-	bool RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage);
-	UFUNCTION(BlueprintCallable)
-	void ResetCraftingIngredients(bool ResetFirst, bool ResetSecond);
+	UFUNCTION(BlueprintCallable) bool RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage);
+	UFUNCTION(BlueprintCallable) void ResetCraftingIngredients(bool ResetFirst, bool ResetSecond);
 
-	UFUNCTION(BlueprintCallable)
-	void GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource);
-	UFUNCTION(BlueprintCallable)
-	void GetResourceImage(int32 ResourceStackIndex, UTexture2D*& ResourceImage);
-	UFUNCTION(BlueprintCallable)
-	void GetResourceCount(int32 ResourceStackIndex, int32& ResourceCount);
+	UFUNCTION(BlueprintCallable) void GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource);
+	UFUNCTION(BlueprintCallable) void GetResourceImage(int32 ResourceStackIndex, UTexture2D*& ResourceImage);
+	UFUNCTION(BlueprintCallable) void GetResourceCount(int32 ResourceStackIndex, int32& ResourceCount);
 
-	UFUNCTION(BlueprintCallable)
-	UTexture2D* CheckCanCraft();
-	UFUNCTION(BlueprintCallable)
-	bool AddUsable();
-	UFUNCTION(BlueprintCallable)
-	bool CheckCanCraftMore();
-	UFUNCTION(BlueprintCallable)
-	void ResetIngredients();
-	UFUNCTION(BlueprintCallable)
-	int32 GetIngredientsCount(bool First, bool Second);
-	UFUNCTION(BlueprintCallable)
-	UTexture2D* GetIngredientImage(bool First, bool Second);
+	UFUNCTION(BlueprintCallable) UTexture2D* CheckCanCraft();
+	UFUNCTION(BlueprintCallable) bool AddUsable();
+	UFUNCTION(BlueprintCallable) bool CheckCanCraftMore();
+	UFUNCTION(BlueprintCallable) int32 GetIngredientsCount(bool First, bool Second);
+	UFUNCTION(BlueprintCallable) UTexture2D* GetIngredientImage(bool First, bool Second);
 
-	UFUNCTION(BlueprintCallable)
-	UTexture2D* GetEquipmentImage(int32 Index);
-
-	UFUNCTION(BlueprintCallable)
-	UTexture2D* GetGearImage(int32 Index, int32& ItemCount);
+	UFUNCTION(BlueprintCallable) UTexture2D* GetEquipmentImage(int32 Index);
+	UFUNCTION(BlueprintCallable) UTexture2D* GetGearImage(int32 Index, int32& ItemCount);
 
 	void GetGear(int32 Index);
 	UFUNCTION(BlueprintCallable)
@@ -294,7 +233,7 @@ public:
 
 	void Dodge();
 	void Block();
-	virtual void Stun() override;
+	virtual void Stagger() override;
 
 	void SetStaminaRechargeTimer(float RechargeDelay);
 	void ResetStaminaRecharge();
@@ -311,11 +250,8 @@ public:
 
 	virtual void DeathEnd() override;
 
-	UFUNCTION(BlueprintCallable)
-	void OpenCombo();
-
-	UFUNCTION(BlueprintCallable)
-	void ResetCombo();
+	UFUNCTION(BlueprintCallable) void OpenCombo();
+	UFUNCTION(BlueprintCallable) void ResetCombo();
 
 	void Q();
 
