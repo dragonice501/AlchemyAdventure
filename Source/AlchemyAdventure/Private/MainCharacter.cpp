@@ -55,49 +55,19 @@ void AMainCharacter::BeginPlay()
 
 	MainPlayerController = Cast<AMainPlayerController>(GetController());
 
-	if (StartingGearOne.Num() > 0)
+	if (StartingUsables.Num() > 0)
 	{
-		while (StartingGearOne.Num() > 0)
+		for (int i = 0; i < StartingUsables.Num(); i++)
 		{
-			AUsable* UsableToAdd = Cast<AUsable>(PotionMap[StartingGearOne[0]]->GetDefaultObject());
-			GearSlotOneInventory.Add(UsableToAdd);
-			FString Name = UsableToAdd->UsableName;
-			UsableToAdd->SetActorLabel(Name);
-			StartingGearOne.RemoveAt(0);
+			AUsable* Usable = Cast<AUsable>(StartingUsables[i]->GetDefaultObject());
+			if (Usable)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UsablePointer"));
+				Usable->BuildUsable(*Usable->StartingName);
+				UsablesInventory.Add(Usable);
+			}
 		}
-	}
-	if (StartingGearTwo.Num() > 0)
-	{
-		while (StartingGearTwo.Num() > 0)
-		{
-			AUsable* UsableToAdd = Cast<AUsable>(PotionMap[StartingGearTwo[0]]->GetDefaultObject());
-			GearSlotTwoInventory.Add(UsableToAdd);
-			FString Name = UsableToAdd->UsableName;
-			UsableToAdd->SetActorLabel(Name);
-			StartingGearTwo.RemoveAt(0);
-		}
-	}
-	if (StartingGearThree.Num() > 0)
-	{
-		while (StartingGearThree.Num() > 0)
-		{
-			AUsable* UsableToAdd = Cast<AUsable>(PotionMap[StartingGearThree[0]]->GetDefaultObject());
-			GearSlotThreeInventory.Add(UsableToAdd);
-			FString Name = UsableToAdd->UsableName;
-			UsableToAdd->SetActorLabel(Name);
-			StartingGearThree.RemoveAt(0);
-		}
-	}
-	if (StartingGearFour.Num() > 0)
-	{
-		while (StartingGearFour.Num() > 0)
-		{
-			AUsable* UsableToAdd = Cast<AUsable>(PotionMap[StartingGearFour[0]]->GetDefaultObject());
-			GearSlotFourInventory.Add(UsableToAdd);
-			FString Name = UsableToAdd->UsableName;
-			UsableToAdd->SetActorLabel(Name);
-			StartingGearFour.RemoveAt(0);
-		}
+		
 	}
 }
 
@@ -275,7 +245,7 @@ void AMainCharacter::E()
 				{
 					Resource->BuildResource(CurrentPickup->ItemName);
 					FString Name = Resource->ResourceName;
-					Resource->SetActorLabel(Name);
+					//Resource->SetActorLabel(Name);
 					ResourceInventory.Add(Resource);
 					ResourceInventory.Sort();
 
@@ -1018,9 +988,9 @@ bool AMainCharacter::AddUsable()
 					Usable->BuildUsable(Craftable);
 					AUsable* UsableToAdd = Cast<AUsable>(PotionMap[Usable->UsableID]->GetDefaultObject());
 					FString Name = UsableToAdd->UsableName;
-					UsableToAdd->SetActorLabel(Name);
+					//UsableToAdd->SetActorLabel(Name);
 					UsablesInventory.Add(UsableToAdd);
-					DutchQuickSort(UsablesInventory, 0, UsablesInventory.Num() - 1);
+					//DutchQuickSort(UsablesInventory, 0, UsablesInventory.Num() - 1);
 
 					SetIngredientsOneInv.RemoveAt(0);
 					SetIngredientsTwoInv.RemoveAt(0);
@@ -1723,17 +1693,18 @@ void AMainCharacter::DutchQuickSort(TArray<AUsable*> Inventory, int Left, int Ri
 	DutchQuickSort(Inventory, i, Right);
 }
 
-void AMainCharacter::DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int& i, int& j)
+void AMainCharacter::DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int i, int j)
 {
-	i = Left - 1, j = Right;
+	i = Left - 1;
+	j = Right;
 	int p = Left - 1, q = Right;
 	int v = Arr[Right]->UsableID;
 
 	while (true)
 	{
-		while (Arr[++i]->UsableID < v);
+		while (Arr[i++]->UsableID < v);
 
-		while (v < Arr[--j]->UsableID)
+		while (v < Arr[j--]->UsableID)
 		{
 			if (j == Left) break;
 		}
@@ -1758,7 +1729,7 @@ void AMainCharacter::DutchPartition(TArray<AUsable*> Arr, int Left, int Right, i
 	Swap(i, Right);
 
 	j = i - 1;
-	for (int k = Left; k < p; k++, j)
+	for (int k = Left; k < p; k++, j--)
 	{
 		Swap(k, j);
 	}

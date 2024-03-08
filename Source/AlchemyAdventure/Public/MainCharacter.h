@@ -71,6 +71,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<TSubclassOf<AWeapon>> EquipmentInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AResource*> ResourceInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> UsablesInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<TSubclassOf<AUsable>> StartingUsables;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<TSubclassOf<AUsable>> PotionMap;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<APickup*> OverlappingPickups;
@@ -88,11 +89,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotTwoInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotThreeInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotFourInventory;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<int32> StartingGearOne;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<int32> StartingGearTwo;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<int32> StartingGearThree;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<int32> StartingGearFour;
 
 	float MaxWalkSpeed = 400.f;
 
@@ -186,7 +182,7 @@ public:
 	int32 Partition(TArray<AUsable*> Inventory, int32 Low, int32 High);
 	void Swap(int32 i, int32 j);
 	void DutchQuickSort(TArray<AUsable*> Inventory, int Left, int Right);
-	void DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int& i, int& j);
+	void DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int i, int j);
 
 	UFUNCTION(BlueprintCallable) bool RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage);
 	UFUNCTION(BlueprintCallable) void ResetCraftingIngredients(bool ResetFirst, bool ResetSecond);

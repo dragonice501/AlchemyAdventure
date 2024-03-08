@@ -45,9 +45,9 @@ void AMainPlayerCharacter::BeginPlay()
 	UE_LOG(LogTemp, Warning, TEXT("Ceil: %f"), FMath::CeilToFloat(num));
 	UE_LOG(LogTemp, Warning, TEXT("Round: %f"), FMath::RoundToFloat(num));
 
-	int in = FMath::Pow(2, 24);
+	//int in = FMath::Pow(2, 24);
 
-	UE_LOG(LogTemp, Warning, TEXT("Pow: %d"), in);
+	//UE_LOG(LogTemp, Warning, TEXT("Pow: %d"), in);
 
 	DetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayerCharacter::OnSphereBeginOverlap);
 }
