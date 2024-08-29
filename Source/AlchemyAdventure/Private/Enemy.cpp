@@ -4,11 +4,14 @@
 #include "Enemy.h"
 #include "Components/ArrowComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "EnemyController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "MainCharacter.h"
 #include "Weapon.h"
 #include "Pickup.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 AEnemy::AEnemy()
 {
@@ -83,11 +86,6 @@ void AEnemy::SetDead()
 	}
 }
 
-void AEnemy::Die(AActor* Causer)
-{
-	Super::Die(Causer);
-}
-
 void AEnemy::DeathEnd()
 {
 	if (RightHandEquipment)
@@ -112,7 +110,8 @@ void AEnemy::DeathEnd()
 		
 	}
 
-	Super::DeathEnd();
+	GetMesh()->bPauseAnims = true;
+	Destroy();
 }
 
 void AEnemy::AttackSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -178,4 +177,199 @@ void AEnemy::ShowHealthBar_Implementation(bool Locked)
 {
 	GetWorldTimerManager().ClearTimer(HealthBarTimer);
 	GetWorldTimerManager().SetTimer(HealthBarTimer, this, &AEnemy::HideHealthBar, HealthBarDisplayTime);
+}
+
+float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+	AMainCharacter* MainCharacter = Cast<AMainCharacter>(this);
+	if (MainCharacter)
+	{
+		if (MainCharacter->bInvincible == true) return 0;
+	}
+
+	AEnemy* Enemy = Cast<AEnemy>(this);
+	if (Enemy)
+	{
+		Enemy->SetTargetCharacter(Cast<AMainCharacter>(EventInstigator->GetCharacter()), true);
+	}
+
+	if (Health - DamageAmount <= 0.f)
+	{
+		Health = 0.f;
+		Die(DamageCauser);
+		return DamageAmount;
+	}
+	else
+	{
+		Health -= DamageAmount;
+	}
+
+	AWeapon* Weapon = Cast<AWeapon>(DamageCauser);
+	if (Weapon)
+	{
+		DepletePoise(Weapon->PoiseCost);
+	}
+
+	return DamageAmount;
+}
+
+void AEnemy::DepletePoise(float Cost)
+{
+	Poise -= Cost;
+	if (Poise <= 0.f)
+	{
+		Poise = MaxPoise;
+		Stagger();
+		return;
+	}
+	SetPoiseRechargeTimer();
+}
+
+void AEnemy::SetPoiseRechargeTimer()
+{
+	GetWorldTimerManager().ClearTimer(ResetPoiseRechargeTimer);
+	GetWorldTimerManager().SetTimer(ResetPoiseRechargeTimer, this, &AEnemy::ResetPoise, 5.0f);
+}
+
+void AEnemy::ResetPoise()
+{
+	Poise = MaxPoise;
+}
+
+void AEnemy::Stagger()
+{
+	bStunned = true;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HurtMontage)
+	{
+		AnimInstance->Montage_Play(HurtMontage);
+		AnimInstance->Montage_JumpToSection(TEXT("HurtFront"));
+	}
+
+	bAttacking = false;
+}
+
+void AEnemy::ResetStunned()
+{
+	bStunned = false;
+}
+
+void AEnemy::Recoil()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && RecoilMontage)
+	{
+		AnimInstance->Montage_Play(RecoilMontage);
+		AnimInstance->Montage_JumpToSection("");
+	}
+}
+
+void AEnemy::EquipRightHand(TSubclassOf<AWeapon> WeaponToEquip)
+{
+	if (WeaponToEquip)
+	{
+		if (RightHandEquipment != nullptr)
+		{
+			RightHandEquipment->Destroy();
+		}
+
+		AActor* Weapon = GetWorld()->SpawnActor(WeaponToEquip);
+		const USkeletalMeshSocket* RightHandSocket = GetMesh()->GetSocketByName("Weapon_R");
+		if (RightHandSocket)
+		{
+			RightHandSocket->AttachActor(Weapon, GetMesh());
+		}
+
+		RightHandEquipment = Cast<AWeapon>(Weapon);
+		if (RightHandEquipment)
+		{
+			RightHandEquipment->SetMainCharacter(this);
+		}
+	}
+	else if (WeaponToEquip == nullptr)
+	{
+		if (RightHandEquipment != nullptr)
+		{
+			RightHandEquipment->Destroy();
+		}
+	}
+}
+
+void AEnemy::EquipLeftHand(TSubclassOf<AWeapon> WeaponToEquip)
+{
+	if (WeaponToEquip)
+	{
+		if (LeftHandEquipment != nullptr)
+		{
+			LeftHandEquipment->Destroy();
+		}
+
+		AActor* Weapon = GetWorld()->SpawnActor(WeaponToEquip);
+		const USkeletalMeshSocket* LeftHandSocket = GetMesh()->GetSocketByName("Weapon_L");
+		if (LeftHandSocket)
+		{
+			LeftHandSocket->AttachActor(Weapon, GetMesh());
+		}
+
+		LeftHandEquipment = Cast<AWeapon>(Weapon);
+		if (LeftHandEquipment)
+		{
+			LeftHandEquipment->SetMainCharacter(this);
+		}
+	}
+	else if (WeaponToEquip == nullptr)
+	{
+		if (LeftHandEquipment != nullptr)
+		{
+			LeftHandEquipment->Destroy();
+		}
+	}
+}
+
+void AEnemy::ActivateWeapon()
+{
+	if (RightHandEquipment)
+	{
+		RightHandEquipment->ActivateAttackCollision();
+	}
+}
+
+void AEnemy::DeactivateWeapon()
+{
+	if (RightHandEquipment)
+	{
+		RightHandEquipment->DeactivateAttackCollision();
+	}
+}
+
+void AEnemy::Die(AActor* Causer)
+{
+	AEnemy* Enemy = Cast<AEnemy>(this);
+	if (Enemy)
+	{
+		Enemy->SetDead();
+	}
+
+	AWeapon* Weapon = Cast<AWeapon>(Causer);
+	if (Weapon)
+	{
+		AMainCharacter* MainCharacter = Cast<AMainCharacter>(Weapon->GetCharacter());
+		if (MainCharacter)
+		{
+			MainCharacter->UntargetEnemy();
+			MainCharacter->SwitchMovementStyle(EMovementStyle::EMS_Free);
+			MainCharacter->SwitchCameraMovement(ECameraMovement::ECM_Free);
+		}
+	}
+
+	UAnimInstance* AnimInstace = GetMesh()->GetAnimInstance();
+	if (AnimInstace && DeathMontage)
+	{
+		AnimInstace->Montage_Play(DeathMontage, 1.0);
+		AnimInstace->Montage_JumpToSection(FName("Death"), DeathMontage);
+	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	bAttacking = false;
 }

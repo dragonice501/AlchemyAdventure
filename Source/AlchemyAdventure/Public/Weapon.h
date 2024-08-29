@@ -24,22 +24,13 @@ class ALCHEMYADVENTURE_API AWeapon : public AItem
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UArrowComponent* ArrowComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UArrowComponent* ArrowComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) USkeletalMeshComponent* Mesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UBoxComponent* AttackCollisionBox;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UBoxComponent* GuardCollisionBox;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UDamageType> DamageType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USkeletalMeshComponent* Mesh;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UBoxComponent* AttackCollisionBox;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UBoxComponent* GuardCollisionBox;
-
-	ABaseCharacter* Owner;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UDamageType> DamageType;
+	ACharacter* Owner;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") EWeaponType WeaponType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float Damage;
@@ -67,12 +58,12 @@ public:
 	void ActivateGuardCollision();
 	void DeactivateGuardCollision();
 
-	TArray<ABaseCharacter*> HitCharacters;
+	TArray<ACharacter*> HitCharacters;
 	TArray<AWeapon*> BlockedWeapons;
 
-	FORCEINLINE ABaseCharacter* GetCharacter() const { return Owner; }
+	FORCEINLINE ACharacter* GetCharacter() const { return Owner; }
 
-	FORCEINLINE void SetMainCharacter(ABaseCharacter* Character) { Owner = Character; }
+	FORCEINLINE void SetMainCharacter(ACharacter* Character) { Owner = Character; }
 
 protected:
 	// Called when the game starts or when spawned

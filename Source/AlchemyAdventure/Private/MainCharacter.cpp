@@ -2,25 +2,26 @@
 
 
 #include "MainCharacter.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/ArrowComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstance.h"
 #include "MainPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Enemy.h"
 #include "Engine/SkeletalMeshSocket.h"
-#include "Components/SphereComponent.h"
-#include "Components/BoxComponent.h"
-#include "Components/ArrowComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Pickup.h"
 #include "Item.h"
 #include "Weapon.h"
 #include "Resource.h"
 #include "Usable.h"
-#include "Engine/SkeletalMeshSocket.h"
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -67,7 +68,22 @@ void AMainCharacter::BeginPlay()
 				UsablesInventory.Add(Usable);
 			}
 		}
-		
+	}
+
+	if (StartingWeapon)
+	{
+		EquipRightHand(StartingWeapon);
+	}
+
+	if (APlayerController* playerController = Cast<APlayerController>(GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(playerController->GetLocalPlayer()))
+		{
+			if (mMappingContext)
+			{
+				subsystem->AddMappingContext(mMappingContext, 0);
+			}
+		}
 	}
 }
 
@@ -117,47 +133,88 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("LMB", IE_Pressed, this, &AMainCharacter::LMB);
-	PlayerInputComponent->BindAction("RMB", IE_Pressed, this, &AMainCharacter::RMBPressed);
-	PlayerInputComponent->BindAction("RMB", IE_Released, this, &AMainCharacter::RMBReleased);
-	PlayerInputComponent->BindAction("MMB", IE_Pressed, this, &AMainCharacter::MMB);
-	PlayerInputComponent->BindAction("Space", IE_Pressed, this, &AMainCharacter::Dodge);
-	PlayerInputComponent->BindAction("E", IE_Pressed, this, &AMainCharacter::E);
-	PlayerInputComponent->BindAction("Q", IE_Pressed, this, &AMainCharacter::Q);
-	PlayerInputComponent->BindAction("1", IE_Pressed, this, &AMainCharacter::OnePressed);
-	PlayerInputComponent->BindAction("2", IE_Pressed, this, &AMainCharacter::TwoPressed);
-	PlayerInputComponent->BindAction("3", IE_Pressed, this, &AMainCharacter::ThreePressed);
-	PlayerInputComponent->BindAction("4", IE_Pressed, this, &AMainCharacter::FourPressed);
-
-	PlayerInputComponent->BindAxis("MoveForward", this, &AMainCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AMainCharacter::MoveRight);
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	if (UEnhancedInputComponent* input = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		input->BindAction(mMoveAction, ETriggerEvent::Triggered, this, &AMainCharacter::Move);
+		input->BindAction(mLookAction, ETriggerEvent::Triggered, this, &AMainCharacter::Look);
+		input->BindAction(mAttackAction, ETriggerEvent::Triggered, this, &AMainCharacter::Attack);
+		input->BindAction(mStartBlockAction, ETriggerEvent::Triggered, this, &AMainCharacter::StartBlock);
+		input->BindAction(mEndBlockAction, ETriggerEvent::Triggered, this, &AMainCharacter::EndBlock);
+		input->BindAction(mDodgeAction, ETriggerEvent::Triggered, this, &AMainCharacter::Dodge);
+		input->BindAction(mInteractAction, ETriggerEvent::Triggered, this, &AMainCharacter::Interact);
+		input->BindAction(mMenuAction, ETriggerEvent::Triggered, this, &AMainCharacter::Menu);
+		input->BindAction(mToggleLockOnAction, ETriggerEvent::Triggered, this, &AMainCharacter::ToggleLockOn);
+		
+		input->BindAction(mOneShortcutAction, ETriggerEvent::Triggered, this, &AMainCharacter::OnePressed);
+		input->BindAction(mTwoShortcutAction, ETriggerEvent::Triggered, this, &AMainCharacter::TwoPressed);
+		input->BindAction(mThreeShortcutAction, ETriggerEvent::Triggered, this, &AMainCharacter::ThreePressed);
+		input->BindAction(mFourShortcutAction, ETriggerEvent::Triggered, this, &AMainCharacter::FourPressed);
+	}
 }
 
-void AMainCharacter::MoveForward(float Value)
+float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	InputVector.X = Value;
+	AMainCharacter* MainCharacter = Cast<AMainCharacter>(this);
+	if (MainCharacter)
+	{
+		if (MainCharacter->bInvincible == true) return 0;
+	}
 
-	const FRotator Rotation = GetControlRotation();
-	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
-	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	AEnemy* Enemy = Cast<AEnemy>(this);
+	if (Enemy)
+	{
+		Enemy->SetTargetCharacter(Cast<AMainCharacter>(EventInstigator->GetCharacter()), true);
+	}
 
-	AddMovementInput(Direction, Value);
+	if (Health - DamageAmount <= 0.f)
+	{
+		Health = 0.f;
+		Die(DamageCauser);
+		return DamageAmount;
+	}
+	else
+	{
+		Health -= DamageAmount;
+	}
+
+	AWeapon* Weapon = Cast<AWeapon>(DamageCauser);
+	if (Weapon)
+	{
+		DepletePoise(Weapon->PoiseCost);
+	}
+
+	return DamageAmount;
 }
 
-void AMainCharacter::MoveRight(float Value)
+void AMainCharacter::Move(const FInputActionValue& value)
 {
-	InputVector.Y = Value;
+	FVector2D moveVector = value.Get<FVector2D>();
 
-	const FRotator Rotation = GetControlRotation();
-	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
-	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	if (moveVector.SquaredLength() > 0.0f)
+	{
+		const FRotator rotation = GetControlRotation();
+		const FRotator yaw(0.0f, rotation.Yaw, 0.0f);
 
-	AddMovementInput(Direction, Value);
+		const FVector forward = FRotationMatrix(yaw).GetUnitAxis(EAxis::X);
+		const FVector right = FRotationMatrix(yaw).GetUnitAxis(EAxis::Y);
+
+		AddMovementInput(forward, moveVector.X);
+		AddMovementInput(right, moveVector.Y);
+	}
 }
 
-void AMainCharacter::LMB()
+void AMainCharacter::Look(const FInputActionValue& value)
+{
+	FVector2D lookVector = value.Get<FVector2D>();
+
+	if (lookVector.SquaredLength() > 0.0f)
+	{
+		AddControllerPitchInput(lookVector.Y);
+		AddControllerYawInput(lookVector.X);
+	}
+}
+
+void AMainCharacter::Attack(const FInputActionValue& value)
 {
 	if (bAttacking || bBlocking || bDodging || bStunned || bInventoryOpen || Stamina <= 0.f || RightHandEquipment == nullptr) return;
 
@@ -182,7 +239,7 @@ void AMainCharacter::LMB()
 	}
 }
 
-void AMainCharacter::RMBPressed()
+void AMainCharacter::StartBlock(const FInputActionValue& value)
 {
 	if (!bAttacking && !bDodging && !bInventoryOpen && RightHandEquipment)
 	{
@@ -194,7 +251,7 @@ void AMainCharacter::RMBPressed()
 	}
 }
 
-void AMainCharacter::RMBReleased()
+void AMainCharacter::EndBlock(const FInputActionValue& value)
 {
 	bBlocking = false;
 	if (RightHandEquipment)
@@ -203,25 +260,7 @@ void AMainCharacter::RMBReleased()
 	}
 }
 
-void AMainCharacter::MMB()
-{
-	if (bInventoryOpen) return;
-
-	bool LockedOn = FindBestTargetEnemy();
-	if (LockedOn)
-	{
-
-	}
-	else
-	{
-		UntargetEnemy();
-		SwitchCameraMovement(ECameraMovement::ECM_Free);
-	}
-
-	SwitchMovementStyle(EMovementStyle::EMS_Free);
-}
-
-void AMainCharacter::E()
+void AMainCharacter::Interact(const FInputActionValue& value)
 {
 	if (bCanPickup && !bInventoryOpen)
 	{
@@ -262,7 +301,7 @@ void AMainCharacter::E()
 	}
 }
 
-void AMainCharacter::Q()
+void AMainCharacter::Menu(const FInputActionValue& value)
 {
 	if (MainPlayerController)
 	{
@@ -294,7 +333,21 @@ void AMainCharacter::Q()
 	}
 }
 
-void AMainCharacter::OnePressed()
+void AMainCharacter::ToggleLockOn(const FInputActionValue& value)
+{
+	if (bInventoryOpen) return;
+
+	bool LockedOn = FindBestTargetEnemy();
+	if (!LockedOn)
+	{
+		UntargetEnemy();
+		SwitchCameraMovement(ECameraMovement::ECM_Free);
+	}
+
+	SwitchMovementStyle(EMovementStyle::EMS_Free);
+}
+
+void AMainCharacter::OnePressed(const FInputActionValue& value)
 {
 	if (GearSlotOneInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned && !bBlocking)
 	{
@@ -302,7 +355,7 @@ void AMainCharacter::OnePressed()
 	}
 }
 
-void AMainCharacter::TwoPressed()
+void AMainCharacter::TwoPressed(const FInputActionValue& value)
 {
 	if (GearSlotTwoInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
@@ -310,7 +363,7 @@ void AMainCharacter::TwoPressed()
 	}
 }
 
-void AMainCharacter::ThreePressed()
+void AMainCharacter::ThreePressed(const FInputActionValue& value)
 {
 	if (GearSlotThreeInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
@@ -318,7 +371,7 @@ void AMainCharacter::ThreePressed()
 	}
 }
 
-void AMainCharacter::FourPressed()
+void AMainCharacter::FourPressed(const FInputActionValue& value)
 {
 	if (GearSlotFourInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
@@ -583,13 +636,13 @@ void AMainCharacter::EquipWeaponR(int32 Index)
 	{
 		if (EquipmentInventory[Index])
 		{
-			Super::EquipRightHand(EquipmentInventory[Index]);
+			EquipRightHand(EquipmentInventory[Index]);
 			RighHandIndex = Index;
 		}
 	}
 	else
 	{
-		Super::EquipRightHand(nullptr);
+		EquipRightHand(nullptr);
 		RighHandIndex = -1;
 	}
 }
@@ -604,12 +657,12 @@ void AMainCharacter::EquipWeaponL(int32 Index)
 			{
 
 			}
-			Super::EquipLeftHand(EquipmentInventory[Index]);
+			EquipLeftHand(EquipmentInventory[Index]);
 		}
 	}
 	else
 	{
-		Super::EquipLeftHand(nullptr);
+		EquipLeftHand(nullptr);
 	}
 }
 
@@ -1845,13 +1898,59 @@ void AMainCharacter::Block()
 	}
 }
 
+void AMainCharacter::DepletePoise(float Cost)
+{
+	Poise -= Cost;
+	if (Poise <= 0.f)
+	{
+		Poise = MaxPoise;
+		Stagger();
+		return;
+	}
+	SetPoiseRechargeTimer();
+}
+
+void AMainCharacter::SetPoiseRechargeTimer()
+{
+	GetWorldTimerManager().ClearTimer(ResetPoiseRechargeTimer);
+	GetWorldTimerManager().SetTimer(ResetPoiseRechargeTimer, this, &AMainCharacter::ResetPoise, 5.0f);
+}
+
+void AMainCharacter::ResetPoise()
+{
+	Poise = MaxPoise;
+}
+
 void AMainCharacter::Stagger()
 {
-	Super::Stagger();
+	bStunned = true;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HurtMontage)
+	{
+		AnimInstance->Montage_Play(HurtMontage);
+		AnimInstance->Montage_JumpToSection(TEXT("HurtFront"));
+	}
+
+	bAttacking = false;
 
 	bUsing = false;
 	bDodging = false;
 	ResetCombo();
+}
+
+void AMainCharacter::Recoil()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && RecoilMontage)
+	{
+		AnimInstance->Montage_Play(RecoilMontage);
+		AnimInstance->Montage_JumpToSection("");
+	}
+}
+
+void AMainCharacter::ResetStunned()
+{
+	bStunned = false;
 }
 
 void AMainCharacter::ResetDodge()
@@ -1893,7 +1992,120 @@ void AMainCharacter::ResetCombo()
 	ComboCount = 1;
 }
 
+void AMainCharacter::Die(AActor* Causer)
+{
+	AEnemy* Enemy = Cast<AEnemy>(this);
+	if (Enemy)
+	{
+		Enemy->SetDead();
+	}
+
+	AWeapon* Weapon = Cast<AWeapon>(Causer);
+	if (Weapon)
+	{
+		AMainCharacter* MainCharacter = Cast<AMainCharacter>(Weapon->GetCharacter());
+		if (MainCharacter)
+		{
+			MainCharacter->UntargetEnemy();
+			MainCharacter->SwitchMovementStyle(EMovementStyle::EMS_Free);
+			MainCharacter->SwitchCameraMovement(ECameraMovement::ECM_Free);
+		}
+	}
+
+	UAnimInstance* AnimInstace = GetMesh()->GetAnimInstance();
+	if (AnimInstace && DeathMontage)
+	{
+		AnimInstace->Montage_Play(DeathMontage, 1.0);
+		AnimInstace->Montage_JumpToSection(FName("Death"), DeathMontage);
+	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	bAttacking = false;
+}
+
 void AMainCharacter::DeathEnd()
 {
+	GetMesh()->bPauseAnims = true;
+	Destroy();
+
 	UKismetSystemLibrary::QuitGame(this, Cast<APlayerController>(GetController()), EQuitPreference::Quit, true);
+}
+
+void AMainCharacter::EquipRightHand(TSubclassOf<AWeapon> WeaponToEquip)
+{
+	if (WeaponToEquip)
+	{
+		if (RightHandEquipment != nullptr)
+		{
+			RightHandEquipment->Destroy();
+		}
+
+		AActor* Weapon = GetWorld()->SpawnActor(WeaponToEquip);
+		const USkeletalMeshSocket* RightHandSocket = GetMesh()->GetSocketByName("Weapon_R");
+		if (RightHandSocket)
+		{
+			RightHandSocket->AttachActor(Weapon, GetMesh());
+		}
+
+		RightHandEquipment = Cast<AWeapon>(Weapon);
+		if (RightHandEquipment)
+		{
+			RightHandEquipment->SetMainCharacter(this);
+		}
+	}
+	else if (WeaponToEquip == nullptr)
+	{
+		if (RightHandEquipment != nullptr)
+		{
+			RightHandEquipment->Destroy();
+		}
+	}
+}
+
+void AMainCharacter::EquipLeftHand(TSubclassOf<AWeapon> WeaponToEquip)
+{
+	if (WeaponToEquip)
+	{
+		if (LeftHandEquipment != nullptr)
+		{
+			LeftHandEquipment->Destroy();
+		}
+
+		AActor* Weapon = GetWorld()->SpawnActor(WeaponToEquip);
+		const USkeletalMeshSocket* LeftHandSocket = GetMesh()->GetSocketByName("Weapon_L");
+		if (LeftHandSocket)
+		{
+			LeftHandSocket->AttachActor(Weapon, GetMesh());
+		}
+
+		LeftHandEquipment = Cast<AWeapon>(Weapon);
+		if (LeftHandEquipment)
+		{
+			LeftHandEquipment->SetMainCharacter(this);
+		}
+	}
+	else if (WeaponToEquip == nullptr)
+	{
+		if (LeftHandEquipment != nullptr)
+		{
+			LeftHandEquipment->Destroy();
+		}
+	}
+}
+
+void AMainCharacter::ActivateWeapon()
+{
+	if (RightHandEquipment)
+	{
+		RightHandEquipment->ActivateAttackCollision();
+	}
+}
+
+void AMainCharacter::DeactivateWeapon()
+{
+	if (RightHandEquipment)
+	{
+		RightHandEquipment->DeactivateAttackCollision();
+	}
 }

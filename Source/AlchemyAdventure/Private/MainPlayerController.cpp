@@ -191,7 +191,6 @@ void AMainPlayerController::LoadGame()
 
 	if (LoadGameInstance && MainCharacter)
 	{
-		MainCharacter->Q();
 		MainCharacter->SetActorLocation(LoadGameInstance->PlayerLocation);
 		MainCharacter->SetActorRotation(LoadGameInstance->PlayerRotation);
 

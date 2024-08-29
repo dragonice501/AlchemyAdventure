@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseCharacter.h"
+#include "GameFramework/Character.h"
+#include "InputActionValue.h"
 #include "MainCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastSetImageAndCount);
@@ -13,6 +14,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetAttackTimer, boo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetDefenseTimer, bool, bToggleDefenseTimer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetMobilityTimer, bool, bToggleMobilityTimer);
 
+class UInputMappingContext;
+class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
 class USphereComponent;
@@ -37,12 +40,12 @@ enum class ECameraMovement : uint8
 };
 
 UCLASS()
-class ALCHEMYADVENTURE_API AMainCharacter : public ABaseCharacter
+class ALCHEMYADVENTURE_API AMainCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-
+	// Components
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) USpringArmComponent* SpringArm;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) float SpringArmDefaultLength = 500.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) UCameraComponent* Camera;
@@ -50,15 +53,48 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) AMainPlayerController* MainPlayerController;
 
+	// Input
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputMappingContext* mMappingContext;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mMoveAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mLookAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mAttackAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mStartBlockAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mEndBlockAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mDodgeAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mInteractAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mMenuAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mToggleLockOnAction;
+	
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mOneShortcutAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mTwoShortcutAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mThreeShortcutAction;
+	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Input") UInputAction* mFourShortcutAction;
+
+	// Animations
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* DodgeMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* UseMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* GuardMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* AttackMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* HurtMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* DeathMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims") UAnimMontage* RecoilMontage;
+
+	// Attributes
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float Health;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float MaxHealth;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float Poise;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float MaxPoise;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") bool bIsDead = false;
+	FTimerHandle ResetPoiseRechargeTimer;
 
 	FVector InputVector;
 
 	AEnemy* TargetEnemy = nullptr;
 	FVector EnemyLockOnPosition;
 
+	// Combat
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") UParticleSystem* HitParticles;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") USoundBase* HitSound;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float RotatingActorRotate = 180.f;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat") bool bLockedOn = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") bool bUsing = false;
@@ -67,6 +103,21 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat") bool bDodging = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") bool bInvincible = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat") bool bBlocking = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") bool bAttacking;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") float StunChance;
+	bool bStunned = false;
+
+	// Inventory
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment")
+	AWeapon* RightHandEquipment = nullptr;
+	int32 RighHandIndex = -1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment")
+	AWeapon* LeftHandEquipment = nullptr;
+	int32 LeftHandIndex = -1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment")
+	TSubclassOf<AWeapon> StartingWeapon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<TSubclassOf<AWeapon>> EquipmentInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AResource*> ResourceInventory;
@@ -82,14 +133,14 @@ public:
 
 	int32 EquippedWeaponIndex = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotOneInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotTwoInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotThreeInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory") TArray<AUsable*> GearSlotFourInventory;
 
+	// Movement
 	float MaxWalkSpeed = 400.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) float MaxLockOnDistance = 2000.f;
@@ -99,6 +150,7 @@ public:
 	bool bInventoryOpen = false;
 	FRotator CameraFixedRotation;
 
+	// Character Attributes
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float Stamina = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float MaxStamina = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes") float StaminaRechargeRate = 25.f;
@@ -126,23 +178,12 @@ public:
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsTwoInv;
 
 	//Delegates
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
-	FDynamicMulticastSetImageAndCount DynamicMulticastSetImageAndCount;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
-	FDynamicMulticastResetInventoryHUD DynamicMulticastResetInventoryHUD;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
-	FDynamicMulticastOpenCharacterMenu DynamicMulticastOpenCharacterMenu;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
-	FDynamicMulticastSetAttackTimer DynamicMulticastSetAttackTimer;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
-	FDynamicMulticastSetDefenseTimer DynamicMulticastSetDefenseTimer;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable)
-	FDynamicMulticastSetMobilityTimer DynamicMulticastSetMobilityTimer;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetImageAndCount DynamicMulticastSetImageAndCount;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastResetInventoryHUD DynamicMulticastResetInventoryHUD;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastOpenCharacterMenu DynamicMulticastOpenCharacterMenu;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetAttackTimer DynamicMulticastSetAttackTimer;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetDefenseTimer DynamicMulticastSetDefenseTimer;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetMobilityTimer DynamicMulticastSetMobilityTimer;
 
 public:
 	// Sets default values for this character's properties
@@ -154,6 +195,52 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+public:
+
+	// Overrides
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
+	// Input
+	void Move(const FInputActionValue& value);
+	void Look(const FInputActionValue& value);
+	void Attack(const FInputActionValue& value);
+	void Interact(const FInputActionValue& value);
+	void Menu(const FInputActionValue& value);
+	void ToggleLockOn(const FInputActionValue& value);
+	void StartBlock(const FInputActionValue& value);
+	void EndBlock(const FInputActionValue& value);
+	
+	void OnePressed(const FInputActionValue& value);
+	void TwoPressed(const FInputActionValue& value);
+	void ThreePressed(const FInputActionValue& value);
+	void FourPressed(const FInputActionValue& value);
+
+	// Animation
+
+	// Base Character
+	void DepletePoise(float Cost);
+	void SetPoiseRechargeTimer();
+	void ResetPoise();
+
+	virtual void Stagger();
+	void Recoil();
+
+	UFUNCTION(BlueprintCallable) void ResetStunned();
+
+	virtual void Die(AActor* Causer);
+	UFUNCTION(BlueprintCallable) virtual void DeathEnd();
+
+	UFUNCTION(BlueprintCallable) void EquipRightHand(TSubclassOf<AWeapon> WeaponToEquip);
+	UFUNCTION(BlueprintCallable) void EquipLeftHand(TSubclassOf<AWeapon> WeaponToEquip);
+
+	UFUNCTION(BlueprintCallable) void ActivateWeapon();
+	UFUNCTION(BlueprintCallable) void DeactivateWeapon();
+
+	// Attributes
 	FORCEINLINE float GetHealth() { return Health; }
 	FORCEINLINE float GetMaxHealth() { return MaxHealth; }
 
@@ -226,14 +313,13 @@ public:
 	UFUNCTION(BlueprintCallable) void SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex);
 	UFUNCTION(BlueprintCallable) void GetGearStack(int32 StackIndex, int32 SlotIndex);
 	UFUNCTION(BlueprintCallable) void RemoveGearStack(int32 SlotIndex);
-	void AddToGearSlot(AUsable* UsableToAdd, int32 SlotIndex);
 	UFUNCTION(BlueprintCallable) void SwapGearSlot(int32 FirstSlot, int32 SecondSlot);
 	UFUNCTION(BlueprintCallable) void GetGearSlotImageAndCount(int32 SlotIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
 	UFUNCTION(BlueprintCallable) void GetGearInventoryStackImageAndCount(int32 StackIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
+	void AddToGearSlot(AUsable* UsableToAdd, int32 SlotIndex);
 
 	void Dodge();
 	void Block();
-	virtual void Stagger() override;
 
 	void SetStaminaRechargeTimer(float RechargeDelay);
 	void ResetStaminaRecharge();
@@ -244,32 +330,10 @@ public:
 
 	UFUNCTION()
 	void EnemyDetectionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
+
 	UFUNCTION()
 	void EnemyDetectionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	virtual void DeathEnd() override;
-
 	UFUNCTION(BlueprintCallable) void OpenCombo();
 	UFUNCTION(BlueprintCallable) void ResetCombo();
-
-	void Q();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	void MoveForward(float Value);
-	void MoveRight(float Value);
-
-	void LMB();
-	void RMBPressed();
-	void RMBReleased();
-	void MMB();
-	void E();
-	
-	void OnePressed();
-	void TwoPressed();
-	void ThreePressed();
-	void FourPressed();
 };
