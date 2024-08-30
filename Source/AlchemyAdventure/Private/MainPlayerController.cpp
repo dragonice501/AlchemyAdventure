@@ -2,6 +2,7 @@
 
 
 #include "MainPlayerController.h"
+#include "CharacterAttributesComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
@@ -164,12 +165,12 @@ void AMainPlayerController::SaveGame()
 	UAlchemyAdventureSaveGame* SaveGameInstance = Cast<UAlchemyAdventureSaveGame>(UGameplayStatics::CreateSaveGameObject(UAlchemyAdventureSaveGame::StaticClass()));
 	AMainCharacter* MainCharacter = Cast<AMainCharacter>(GetCharacter());
 
-	if (SaveGameInstance && MainCharacter)
+	if (SaveGameInstance && MainCharacter && MainCharacter->mAttributes)
 	{
 		SaveGameInstance->LevelToLoad = UGameplayStatics::GetCurrentLevelName(this);
 		SaveGameInstance->PlayerLocation = MainCharacter->GetActorLocation();
 		SaveGameInstance->PlayerRotation = MainCharacter->GetActorRotation();
-		SaveGameInstance->Health = MainCharacter->Health;
+		SaveGameInstance->Health = MainCharacter->mAttributes->Health;
 		SaveGameInstance->EquipmentInventory = MainCharacter->EquipmentInventory;
 		SaveGameInstance->RightHandIndex = MainCharacter->RighHandIndex;
 		SaveGameInstance->ResourceInventory = MainCharacter->ResourceInventory;
@@ -189,12 +190,12 @@ void AMainPlayerController::LoadGame()
 	LoadGameInstance = Cast<UAlchemyAdventureSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->PlayerName, LoadGameInstance->UserSlot));
 	AMainCharacter* MainCharacter = Cast<AMainCharacter>(GetCharacter());
 
-	if (LoadGameInstance && MainCharacter)
+	if (LoadGameInstance && MainCharacter && MainCharacter->mAttributes)
 	{
 		MainCharacter->SetActorLocation(LoadGameInstance->PlayerLocation);
 		MainCharacter->SetActorRotation(LoadGameInstance->PlayerRotation);
 
-		MainCharacter->Health = LoadGameInstance->Health;
+		MainCharacter->mAttributes->Health = LoadGameInstance->Health;
 		MainCharacter->EquipmentInventory = LoadGameInstance->EquipmentInventory;
 		MainCharacter->RighHandIndex = LoadGameInstance->RightHandIndex;
 		if (MainCharacter->RighHandIndex != -1) MainCharacter->EquipWeaponR(MainCharacter->RighHandIndex);

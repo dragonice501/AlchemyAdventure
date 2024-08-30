@@ -1,27 +1,25 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "MainCharacter.h"
+#include "Enemy.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Item.h"
+#include "MainPlayerController.h"
+#include "Pickup.h"
+#include "Resource.h"
+#include "Usable.h"
+#include "Weapon.h"
+#include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Animation/AnimInstance.h"
-#include "MainPlayerController.h"
-#include "Kismet/GameplayStatics.h"
-#include "DrawDebugHelpers.h"
-#include "Enemy.h"
 #include "Engine/SkeletalMeshSocket.h"
-#include "Pickup.h"
-#include "Item.h"
-#include "Weapon.h"
-#include "Resource.h"
-#include "Usable.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -39,11 +37,10 @@ AMainCharacter::AMainCharacter()
 	EnemyDetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("EnemyDetectionSphere"));
 	EnemyDetectionSphere->SetupAttachment(RootComponent);
 
+	mAttributes = CreateDefaultSubobject<UCharacterAttributesComponent>(TEXT("CharacterAttributes"));
+
 	SwitchMovementStyle(EMovementStyle::EMS_Free);
 	SwitchCameraMovement(ECameraMovement::ECM_Free);
-
-	Health = 85.f;
-	MaxHealth = 100.f;
 }
 
 // Called when the game starts or when spawned
@@ -118,12 +115,12 @@ void AMainCharacter::Tick(float DeltaTime)
 		CheckOverlappingPickups();
 	}
 
-	if (bStaminaCanRecharge)
+	if(mAttributes)
 	{
-		if (Stamina < MaxStamina)
+		if (mAttributes->bStaminaCanRecharge && mAttributes->Stamina < mAttributes->MaxStamina)
 		{
-			Stamina += StaminaRechargeRate * DeltaTime;
-			if (Stamina > MaxStamina) Stamina = MaxStamina;
+			mAttributes->Stamina += mAttributes->StaminaRechargeRate * DeltaTime;
+			if (mAttributes->Stamina > mAttributes->MaxStamina) mAttributes->Stamina = mAttributes->MaxStamina;
 		}
 	}
 }
@@ -166,15 +163,18 @@ float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 		Enemy->SetTargetCharacter(Cast<AMainCharacter>(EventInstigator->GetCharacter()), true);
 	}
 
-	if (Health - DamageAmount <= 0.f)
+	if(mAttributes)
 	{
-		Health = 0.f;
-		Die(DamageCauser);
-		return DamageAmount;
-	}
-	else
-	{
-		Health -= DamageAmount;
+		if (mAttributes->Health - DamageAmount <= 0.f)
+		{
+			mAttributes->Health = 0.f;
+			Die(DamageCauser);
+			return DamageAmount;
+		}
+		else
+		{
+			mAttributes->Health -= DamageAmount;
+		}
 	}
 
 	AWeapon* Weapon = Cast<AWeapon>(DamageCauser);
@@ -189,8 +189,10 @@ float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 void AMainCharacter::Move(const FInputActionValue& value)
 {
 	FVector2D moveVector = value.Get<FVector2D>();
+	mInputVector.X = moveVector.X;
+	mInputVector.Y = moveVector.Y;
 
-	if (moveVector.SquaredLength() > 0.0f)
+	if (mInputVector.SquaredLength() > 0.0f)
 	{
 		const FRotator rotation = GetControlRotation();
 		const FRotator yaw(0.0f, rotation.Yaw, 0.0f);
@@ -198,8 +200,8 @@ void AMainCharacter::Move(const FInputActionValue& value)
 		const FVector forward = FRotationMatrix(yaw).GetUnitAxis(EAxis::X);
 		const FVector right = FRotationMatrix(yaw).GetUnitAxis(EAxis::Y);
 
-		AddMovementInput(forward, moveVector.X);
-		AddMovementInput(right, moveVector.Y);
+		AddMovementInput(forward, mInputVector.X);
+		AddMovementInput(right, mInputVector.Y);
 	}
 }
 
@@ -216,7 +218,11 @@ void AMainCharacter::Look(const FInputActionValue& value)
 
 void AMainCharacter::Attack(const FInputActionValue& value)
 {
-	if (bAttacking || bBlocking || bDodging || bStunned || bInventoryOpen || Stamina <= 0.f || RightHandEquipment == nullptr) return;
+	if (bAttacking || bBlocking || bDodging || bStunned || bInventoryOpen || RightHandEquipment == nullptr) return;
+	if (mAttributes)
+	{
+		if (mAttributes->Stamina < 0.0f) return;
+	}
 
 	bAttacking = true;
 
@@ -235,7 +241,7 @@ void AMainCharacter::Attack(const FInputActionValue& value)
 		}
 
 		UseStamina(RightHandEquipment->StaminaCost, RightHandEquipment->StaminRechargeDelay);
-		bStaminaCanRecharge = false;
+		if(mAttributes) mAttributes->bStaminaCanRecharge = false;
 	}
 }
 
@@ -333,6 +339,108 @@ void AMainCharacter::Menu(const FInputActionValue& value)
 	}
 }
 
+void AMainCharacter::Dodge()
+{
+	if (bDodging || bAttacking || bBlocking || bInventoryOpen) return;
+	if (mAttributes)
+	{
+		if (mAttributes->Stamina <= 0) return;
+		mAttributes->bStaminaCanRecharge = false;
+	}
+
+	bDodging = true;
+	UseStamina(25.f, 1.f);
+	ComboCount = 1;
+	if (TargetEnemy)
+	{
+		if (mInputVector == FVector::ZeroVector)
+		{
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			if (AnimInstance)
+			{
+				AnimInstance->Montage_Play(DodgeMontage);
+				AnimInstance->Montage_JumpToSection("Dodgeback");
+			}
+
+			return;
+		}
+
+		mInputVector.Normalize();
+		FVector DesiredDirection = mInputVector.RotateAngleAxis(GetControlRotation().Yaw, FVector::UpVector);
+
+		FVector RightDirection = FVector::CrossProduct(GetActorUpVector(), DesiredDirection);
+		FVector ToEnemy = TargetEnemy->GetActorLocation() - GetActorLocation();
+		ToEnemy.Normalize();
+		FVector RelativeRight = FVector::CrossProduct(GetActorUpVector(), ToEnemy);
+
+		float ForwardDot = FMath::RoundToFloat(FVector::DotProduct(GetActorForwardVector(), DesiredDirection));
+		float RightDot = FMath::RoundToFloat(FVector::DotProduct(RelativeRight, DesiredDirection));
+
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && DodgeMontage)
+		{
+			if (ForwardDot == 1)
+			{
+				AnimInstance->Montage_Play(DodgeMontage);
+				AnimInstance->Montage_JumpToSection("DodgeForward");
+			}
+			else if (RightDot  == 1)
+			{
+				AnimInstance->Montage_Play(DodgeMontage);
+				AnimInstance->Montage_JumpToSection("DodgeRight");
+			}
+			else if (ForwardDot == -1)
+			{
+				AnimInstance->Montage_Play(DodgeMontage);
+				AnimInstance->Montage_JumpToSection("DodgeBack");
+			}
+			else if (RightDot == -1)
+			{
+				AnimInstance->Montage_Play(DodgeMontage);
+				AnimInstance->Montage_JumpToSection("DodgeLeft");
+			}
+		}
+	}
+	else
+	{
+		if (mInputVector.SizeSquared() > 0)
+		{
+			mInputVector.Normalize();
+			FVector DesiredDirection = mInputVector.RotateAngleAxis(GetControlRotation().Yaw, FVector::UpVector);
+			SetActorRotation(DesiredDirection.Rotation());
+		}
+
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			if (mInputVector.SizeSquared() == 0)
+			{
+				AnimInstance->Montage_Play(DodgeMontage);
+				AnimInstance->Montage_JumpToSection("Dodgeback");
+			}
+			else
+			{
+				AnimInstance->Montage_Play(DodgeMontage);
+				AnimInstance->Montage_JumpToSection("DodgeFront");
+			}
+		}
+	}
+}
+
+void AMainCharacter::Block()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && GuardMontage)
+	{
+		AnimInstance->Montage_Play(GuardMontage);
+		AnimInstance->Montage_JumpToSection("Guard_Hit");
+
+		UseStamina(15.f, 2.f);
+		if(mAttributes)
+		mAttributes->bStaminaCanRecharge = false;
+	}
+}
+
 void AMainCharacter::ToggleLockOn(const FInputActionValue& value)
 {
 	if (bInventoryOpen) return;
@@ -381,9 +489,12 @@ void AMainCharacter::FourPressed(const FInputActionValue& value)
 
 void AMainCharacter::SetHealth(float Amount)
 {
-	if (Amount > MaxHealth) Health = MaxHealth;
-	else if (Amount < 0) Health = 0;
-	else Health = Amount;
+	if(mAttributes)
+	{
+		if (Amount > mAttributes->MaxHealth) mAttributes->Health = mAttributes->MaxHealth;
+		else if (Amount < 0) mAttributes->Health = 0;
+		else mAttributes->Health = Amount;
+	}
 }
 
 void AMainCharacter::EnemyDetectionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -1357,8 +1468,11 @@ float AMainCharacter::GetMobilityTimeRemaining()
 
 void AMainCharacter::Heal(float Amount)
 {
-	Health += Amount;
-	if (Health > MaxHealth) Health = MaxHealth;
+	if(mAttributes)
+	{
+		mAttributes->Health += Amount;
+		if (mAttributes->Health > mAttributes->MaxHealth) mAttributes->Health = mAttributes->MaxHealth;
+	}
 }
 
 void AMainCharacter::PlayUseMontage(FName MontageSection)
@@ -1801,124 +1915,35 @@ void AMainCharacter::Swap(int32 i, int32 j)
 	UsablesInventory[j] = Temp;
 }
 
-void AMainCharacter::Dodge()
-{
-	if (bDodging || bAttacking || bBlocking || bInventoryOpen || Stamina <= 0) return;
-
-	bDodging = true;
-	bStaminaCanRecharge = false;
-	UseStamina(25.f, 1.f);
-	ComboCount = 1;
-	if (TargetEnemy)
-	{
-		if (InputVector == FVector::ZeroVector)
-		{
-			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-			if (AnimInstance)
-			{
-				AnimInstance->Montage_Play(DodgeMontage);
-				AnimInstance->Montage_JumpToSection("Dodgeback");
-			}
-
-			return;
-		}
-
-		InputVector.Normalize();
-		FVector DesiredDirection = InputVector.RotateAngleAxis(GetControlRotation().Yaw, FVector::UpVector);
-
-		FVector RightDirection = FVector::CrossProduct(GetActorUpVector(), DesiredDirection);
-		FVector ToEnemy = TargetEnemy->GetActorLocation() - GetActorLocation();
-		ToEnemy.Normalize();
-		FVector RelativeRight = FVector::CrossProduct(GetActorUpVector(), ToEnemy);
-
-		float ForwardDot = FMath::RoundToFloat(FVector::DotProduct(GetActorForwardVector(), DesiredDirection));
-		float RightDot = FMath::RoundToFloat(FVector::DotProduct(RelativeRight, DesiredDirection));
-
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance && DodgeMontage)
-		{
-			if (ForwardDot == 1)
-			{
-				AnimInstance->Montage_Play(DodgeMontage);
-				AnimInstance->Montage_JumpToSection("DodgeForward");
-			}
-			else if (RightDot  == 1)
-			{
-				AnimInstance->Montage_Play(DodgeMontage);
-				AnimInstance->Montage_JumpToSection("DodgeRight");
-			}
-			else if (ForwardDot == -1)
-			{
-				AnimInstance->Montage_Play(DodgeMontage);
-				AnimInstance->Montage_JumpToSection("DodgeBack");
-			}
-			else if (RightDot == -1)
-			{
-				AnimInstance->Montage_Play(DodgeMontage);
-				AnimInstance->Montage_JumpToSection("DodgeLeft");
-			}
-		}
-	}
-	else
-	{
-		if (InputVector.SizeSquared() > 0)
-		{
-			InputVector.Normalize();
-			FVector DesiredDirection = InputVector.RotateAngleAxis(GetControlRotation().Yaw, FVector::UpVector);
-			SetActorRotation(DesiredDirection.Rotation());
-		}
-
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance)
-		{
-			if (InputVector.SizeSquared() == 0)
-			{
-				AnimInstance->Montage_Play(DodgeMontage);
-				AnimInstance->Montage_JumpToSection("Dodgeback");
-			}
-			else
-			{
-				AnimInstance->Montage_Play(DodgeMontage);
-				AnimInstance->Montage_JumpToSection("DodgeFront");
-			}
-		}
-	}
-}
-
-void AMainCharacter::Block()
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && GuardMontage)
-	{
-		AnimInstance->Montage_Play(GuardMontage);
-		AnimInstance->Montage_JumpToSection("Guard_Hit");
-
-		UseStamina(15.f, 2.f);
-		bStaminaCanRecharge = false;
-	}
-}
 
 void AMainCharacter::DepletePoise(float Cost)
 {
-	Poise -= Cost;
-	if (Poise <= 0.f)
+	if(mAttributes)
 	{
-		Poise = MaxPoise;
-		Stagger();
-		return;
+		mAttributes->Poise -= Cost;
+		if (mAttributes->Poise <= 0.f)
+		{
+			mAttributes->Poise = mAttributes->MaxPoise;
+			Stagger();
+			return;
+		}
+		SetPoiseRechargeTimer();
 	}
-	SetPoiseRechargeTimer();
 }
 
 void AMainCharacter::SetPoiseRechargeTimer()
 {
-	GetWorldTimerManager().ClearTimer(ResetPoiseRechargeTimer);
-	GetWorldTimerManager().SetTimer(ResetPoiseRechargeTimer, this, &AMainCharacter::ResetPoise, 5.0f);
+	if(mAttributes)
+	{
+		GetWorldTimerManager().ClearTimer(mAttributes->ResetPoiseRechargeTimer);
+		GetWorldTimerManager().SetTimer(mAttributes->ResetPoiseRechargeTimer, this, &AMainCharacter::ResetPoise, 5.0f);
+	}
 }
 
 void AMainCharacter::ResetPoise()
 {
-	Poise = MaxPoise;
+	if(mAttributes)
+		mAttributes->Poise = mAttributes->MaxPoise;
 }
 
 void AMainCharacter::Stagger()
@@ -1962,20 +1987,27 @@ void AMainCharacter::ResetDodge()
 
 void AMainCharacter::UseStamina(float StaminaCost, float RechargeDelay)
 {
-	Stamina -= StaminaCost;
-	if (Stamina < 0.f) Stamina = 0.f;
-	SetStaminaRechargeTimer(RechargeDelay);
+	if(mAttributes)
+	{
+		mAttributes->Stamina -= StaminaCost;
+		if (mAttributes->Stamina < 0.0f) mAttributes->Stamina = 0.0f;
+		SetStaminaRechargeTimer(RechargeDelay);
+	}
 }
 
 void AMainCharacter::SetStaminaRechargeTimer(float RechargeDelay)
 {
-	GetWorldTimerManager().ClearTimer(ResetStaminaRechargeTimer);
-	GetWorldTimerManager().SetTimer(ResetStaminaRechargeTimer, this, &AMainCharacter::ResetStaminaRecharge, RechargeDelay);
+	if(mAttributes)
+	{
+		GetWorldTimerManager().ClearTimer(mAttributes->ResetStaminaRechargeTimer);
+		GetWorldTimerManager().SetTimer(mAttributes->ResetStaminaRechargeTimer, this, &AMainCharacter::ResetStaminaRecharge, RechargeDelay);
+	}
 }
 
 void AMainCharacter::ResetStaminaRecharge()
 {
-	bStaminaCanRecharge = true;
+	if(mAttributes)
+		mAttributes->bStaminaCanRecharge = true;
 }
 
 void AMainCharacter::OpenCombo()
