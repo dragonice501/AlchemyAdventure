@@ -6,24 +6,25 @@
 #include "Components/ActorComponent.h"
 #include "CharacterAttributesComponent.generated.h"
 
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ALCHEMYADVENTURE_API UCharacterAttributesComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float Health;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float MaxHealth;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float Stamina;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float MaxStamina;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float StaminaRechargeRate;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float Poise;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float MaxPoise;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsDead = false;
-	bool bStaminaCanRecharge = true;
-	FTimerHandle ResetStaminaRechargeTimer;
-	FTimerHandle ResetPoiseRechargeTimer;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float health;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float maxHealth;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float stamina;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float maxStamina;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float staminaRechargeRate;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float poise;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float maxPoise;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) bool isDead = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) bool staminaCanRecharge = true;
+	FTimerDynamicDelegate staminaTimer;
+	FTimerDynamicDelegate poiseTimer;
+	FTimerHandle resetStaminaRechargeTimer;
+	FTimerHandle resetPoiseRechargeTimer;
 
 public:	
 	// Sets default values for this component's properties
@@ -37,5 +38,11 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+	void SetStaminaRechargeTimer(float time);
+	void ResetStaminaRecharge();
+	void UseStamina(float staminaCost);
+
+	void SetPoiseRechargeTimer(float time);
+	void ResetPoiseRecharge();
+	void DepletePoise(float cost);
 };

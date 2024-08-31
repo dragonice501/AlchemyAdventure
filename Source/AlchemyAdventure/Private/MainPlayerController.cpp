@@ -170,7 +170,7 @@ void AMainPlayerController::SaveGame()
 		SaveGameInstance->LevelToLoad = UGameplayStatics::GetCurrentLevelName(this);
 		SaveGameInstance->PlayerLocation = MainCharacter->GetActorLocation();
 		SaveGameInstance->PlayerRotation = MainCharacter->GetActorRotation();
-		SaveGameInstance->Health = MainCharacter->mAttributes->Health;
+		SaveGameInstance->Health = MainCharacter->mAttributes->health;
 		SaveGameInstance->EquipmentInventory = MainCharacter->EquipmentInventory;
 		SaveGameInstance->RightHandIndex = MainCharacter->RighHandIndex;
 		SaveGameInstance->ResourceInventory = MainCharacter->ResourceInventory;
@@ -195,7 +195,7 @@ void AMainPlayerController::LoadGame()
 		MainCharacter->SetActorLocation(LoadGameInstance->PlayerLocation);
 		MainCharacter->SetActorRotation(LoadGameInstance->PlayerRotation);
 
-		MainCharacter->mAttributes->Health = LoadGameInstance->Health;
+		MainCharacter->mAttributes->health = LoadGameInstance->Health;
 		MainCharacter->EquipmentInventory = LoadGameInstance->EquipmentInventory;
 		MainCharacter->RighHandIndex = LoadGameInstance->RightHandIndex;
 		if (MainCharacter->RighHandIndex != -1) MainCharacter->EquipWeaponR(MainCharacter->RighHandIndex);

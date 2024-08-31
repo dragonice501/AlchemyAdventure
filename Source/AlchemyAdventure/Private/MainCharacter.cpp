@@ -114,15 +114,6 @@ void AMainCharacter::Tick(float DeltaTime)
 	{
 		CheckOverlappingPickups();
 	}
-
-	if(mAttributes)
-	{
-		if (mAttributes->bStaminaCanRecharge && mAttributes->Stamina < mAttributes->MaxStamina)
-		{
-			mAttributes->Stamina += mAttributes->StaminaRechargeRate * DeltaTime;
-			if (mAttributes->Stamina > mAttributes->MaxStamina) mAttributes->Stamina = mAttributes->MaxStamina;
-		}
-	}
 }
 
 // Called to bind functionality to input
@@ -165,22 +156,25 @@ float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 
 	if(mAttributes)
 	{
-		if (mAttributes->Health - DamageAmount <= 0.f)
+		if (mAttributes->health - DamageAmount <= 0.0f)
 		{
-			mAttributes->Health = 0.f;
+			mAttributes->health = 0.0f;
 			Die(DamageCauser);
 			return DamageAmount;
 		}
 		else
 		{
-			mAttributes->Health -= DamageAmount;
+			mAttributes->health -= DamageAmount;
 		}
 	}
 
 	AWeapon* Weapon = Cast<AWeapon>(DamageCauser);
 	if (Weapon)
 	{
-		DepletePoise(Weapon->PoiseCost);
+		if (mAttributes)
+		{
+			mAttributes->DepletePoise(Weapon->PoiseCost);
+		}
 	}
 
 	return DamageAmount;
@@ -216,53 +210,35 @@ void AMainCharacter::Look(const FInputActionValue& value)
 	}
 }
 
-void AMainCharacter::Attack(const FInputActionValue& value)
+void AMainCharacter::Menu(const FInputActionValue& value)
 {
-	if (bAttacking || bBlocking || bDodging || bStunned || bInventoryOpen || RightHandEquipment == nullptr) return;
-	if (mAttributes)
+	if (MainPlayerController)
 	{
-		if (mAttributes->Stamina < 0.0f) return;
-	}
+		bBlocking = false;
 
-	bAttacking = true;
-
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AttackMontage)
-	{
-		FString SectionName = FString::Printf(TEXT("Attack%d"), ComboCount);
-		AnimInstance->Montage_Play(AttackMontage);
-		if (bCanCombo)
+		bInventoryOpen = !bInventoryOpen;
+		MainPlayerController->ToggleInventory(bInventoryOpen);
+		if (bInventoryOpen)
 		{
-			AnimInstance->Montage_JumpToSection(*SectionName, AttackMontage);
+			MainPlayerController->RemovePickupPrompt();
+			SwitchMovementStyle(EMovementStyle::EMS_Free);
+			SwitchCameraMovement(ECameraMovement::EMC_Inventory);
+
+			CameraFixedRotation = FRotator(0.f, GetControlRotation().Yaw, 0.f);
+			SpringArm->SetWorldRotation(CameraFixedRotation);
+
+			DynamicMulticastOpenCharacterMenu.Broadcast();
 		}
 		else
 		{
-			AnimInstance->Montage_JumpToSection(*SectionName, AttackMontage);
+			SwitchCameraMovement(ECameraMovement::ECM_Free);
+			DynamicMulticastResetInventoryHUD.Broadcast();
 		}
 
-		UseStamina(RightHandEquipment->StaminaCost, RightHandEquipment->StaminRechargeDelay);
-		if(mAttributes) mAttributes->bStaminaCanRecharge = false;
-	}
-}
-
-void AMainCharacter::StartBlock(const FInputActionValue& value)
-{
-	if (!bAttacking && !bDodging && !bInventoryOpen && RightHandEquipment)
-	{
-		bBlocking = true;
-		if (RightHandEquipment)
+		if (bLockedOn)
 		{
-			RightHandEquipment->ActivateGuardCollision();
+			UntargetEnemy();
 		}
-	}
-}
-
-void AMainCharacter::EndBlock(const FInputActionValue& value)
-{
-	bBlocking = false;
-	if (RightHandEquipment)
-	{
-		RightHandEquipment->DeactivateGuardCollision();
 	}
 }
 
@@ -307,49 +283,72 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 	}
 }
 
-void AMainCharacter::Menu(const FInputActionValue& value)
+void AMainCharacter::Attack(const FInputActionValue& value)
 {
-	if (MainPlayerController)
+	if (bAttacking || bBlocking || bDodging || bStunned || bInventoryOpen || RightHandEquipment == nullptr) return;
+	if (mAttributes)
 	{
-		bBlocking = false;
+		if (mAttributes->stamina < 0.0f) return;
+	}
 
-		bInventoryOpen = !bInventoryOpen;
-		MainPlayerController->ToggleInventory(bInventoryOpen);
-		if (bInventoryOpen)
+	bAttacking = true;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && AttackMontage)
+	{
+		FString SectionName = FString::Printf(TEXT("Attack%d"), ComboCount);
+		AnimInstance->Montage_Play(AttackMontage);
+		if (bCanCombo)
 		{
-			MainPlayerController->RemovePickupPrompt();
-			SwitchMovementStyle(EMovementStyle::EMS_Free);
-			SwitchCameraMovement(ECameraMovement::EMC_Inventory);
-
-			CameraFixedRotation = FRotator(0.f, GetControlRotation().Yaw, 0.f);
-			SpringArm->SetWorldRotation(CameraFixedRotation);
-
-			DynamicMulticastOpenCharacterMenu.Broadcast();
+			AnimInstance->Montage_JumpToSection(*SectionName, AttackMontage);
 		}
 		else
 		{
-			SwitchCameraMovement(ECameraMovement::ECM_Free);
-			DynamicMulticastResetInventoryHUD.Broadcast();
+			AnimInstance->Montage_JumpToSection(*SectionName, AttackMontage);
 		}
 
-		if (bLockedOn)
+		if(mAttributes)
 		{
-			UntargetEnemy();
+			mAttributes->SetStaminaRechargeTimer(RightHandEquipment->StaminaRechargeDelay);
+			mAttributes->UseStamina(RightHandEquipment->StaminaCost);
+			mAttributes->ResetPoiseRecharge();
 		}
 	}
 }
 
-void AMainCharacter::Dodge()
+void AMainCharacter::StartBlock(const FInputActionValue& value)
+{
+	if (!bAttacking && !bDodging && !bInventoryOpen && RightHandEquipment)
+	{
+		bBlocking = true;
+		if (RightHandEquipment)
+		{
+			RightHandEquipment->ActivateGuardCollision();
+		}
+	}
+}
+
+void AMainCharacter::EndBlock(const FInputActionValue& value)
+{
+	bBlocking = false;
+	if (RightHandEquipment)
+	{
+		RightHandEquipment->DeactivateGuardCollision();
+	}
+}
+
+void AMainCharacter::Dodge(const FInputActionValue& value)
 {
 	if (bDodging || bAttacking || bBlocking || bInventoryOpen) return;
 	if (mAttributes)
 	{
-		if (mAttributes->Stamina <= 0) return;
-		mAttributes->bStaminaCanRecharge = false;
+		if (mAttributes->stamina <= 0) return;
+		
+		mAttributes->UseStamina(25.0f);
+		mAttributes->SetStaminaRechargeTimer(1.0f);
 	}
 
 	bDodging = true;
-	UseStamina(25.f, 1.f);
 	ComboCount = 1;
 	if (TargetEnemy)
 	{
@@ -427,7 +426,7 @@ void AMainCharacter::Dodge()
 	}
 }
 
-void AMainCharacter::Block()
+void AMainCharacter::BlockHit()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && GuardMontage)
@@ -435,9 +434,11 @@ void AMainCharacter::Block()
 		AnimInstance->Montage_Play(GuardMontage);
 		AnimInstance->Montage_JumpToSection("Guard_Hit");
 
-		UseStamina(15.f, 2.f);
 		if(mAttributes)
-		mAttributes->bStaminaCanRecharge = false;
+		{
+			mAttributes->UseStamina(15.0f);
+			mAttributes->ResetStaminaRecharge();
+		}
 	}
 }
 
@@ -484,16 +485,6 @@ void AMainCharacter::FourPressed(const FInputActionValue& value)
 	if (GearSlotFourInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
 		GetGear(3);
-	}
-}
-
-void AMainCharacter::SetHealth(float Amount)
-{
-	if(mAttributes)
-	{
-		if (Amount > mAttributes->MaxHealth) mAttributes->Health = mAttributes->MaxHealth;
-		else if (Amount < 0) mAttributes->Health = 0;
-		else mAttributes->Health = Amount;
 	}
 }
 
@@ -1470,8 +1461,8 @@ void AMainCharacter::Heal(float Amount)
 {
 	if(mAttributes)
 	{
-		mAttributes->Health += Amount;
-		if (mAttributes->Health > mAttributes->MaxHealth) mAttributes->Health = mAttributes->MaxHealth;
+		mAttributes->health += Amount;
+		if (mAttributes->health > mAttributes->maxHealth) mAttributes->health = mAttributes->maxHealth;
 	}
 }
 
@@ -1915,37 +1906,6 @@ void AMainCharacter::Swap(int32 i, int32 j)
 	UsablesInventory[j] = Temp;
 }
 
-
-void AMainCharacter::DepletePoise(float Cost)
-{
-	if(mAttributes)
-	{
-		mAttributes->Poise -= Cost;
-		if (mAttributes->Poise <= 0.f)
-		{
-			mAttributes->Poise = mAttributes->MaxPoise;
-			Stagger();
-			return;
-		}
-		SetPoiseRechargeTimer();
-	}
-}
-
-void AMainCharacter::SetPoiseRechargeTimer()
-{
-	if(mAttributes)
-	{
-		GetWorldTimerManager().ClearTimer(mAttributes->ResetPoiseRechargeTimer);
-		GetWorldTimerManager().SetTimer(mAttributes->ResetPoiseRechargeTimer, this, &AMainCharacter::ResetPoise, 5.0f);
-	}
-}
-
-void AMainCharacter::ResetPoise()
-{
-	if(mAttributes)
-		mAttributes->Poise = mAttributes->MaxPoise;
-}
-
 void AMainCharacter::Stagger()
 {
 	bStunned = true;
@@ -1983,31 +1943,6 @@ void AMainCharacter::ResetDodge()
 	bAttacking = false;
 	bDodging = false;
 	bCanDodge = true;
-}
-
-void AMainCharacter::UseStamina(float StaminaCost, float RechargeDelay)
-{
-	if(mAttributes)
-	{
-		mAttributes->Stamina -= StaminaCost;
-		if (mAttributes->Stamina < 0.0f) mAttributes->Stamina = 0.0f;
-		SetStaminaRechargeTimer(RechargeDelay);
-	}
-}
-
-void AMainCharacter::SetStaminaRechargeTimer(float RechargeDelay)
-{
-	if(mAttributes)
-	{
-		GetWorldTimerManager().ClearTimer(mAttributes->ResetStaminaRechargeTimer);
-		GetWorldTimerManager().SetTimer(mAttributes->ResetStaminaRechargeTimer, this, &AMainCharacter::ResetStaminaRecharge, RechargeDelay);
-	}
-}
-
-void AMainCharacter::ResetStaminaRecharge()
-{
-	if(mAttributes)
-		mAttributes->bStaminaCanRecharge = true;
 }
 
 void AMainCharacter::OpenCombo()

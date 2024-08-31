@@ -133,7 +133,7 @@ void AWeapon::OnGuardBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 			AMainCharacter* MainCharacter = Cast<AMainCharacter>(Owner);
 			if (MainCharacter)
 			{
-				MainCharacter->Block();
+				MainCharacter->BlockHit();
 			}
 		}
 	}

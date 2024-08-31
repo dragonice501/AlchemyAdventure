@@ -35,7 +35,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") EWeaponType WeaponType;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float Damage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float StaminaCost;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float StaminRechargeDelay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float StaminaRechargeDelay;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float PoiseCost;
 	
 public:	

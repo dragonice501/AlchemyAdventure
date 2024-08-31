@@ -83,18 +83,6 @@ public:
 	// Attributes
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UCharacterAttributesComponent* mAttributes;
 
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Attributes") float Health;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Attributes") float MaxHealth;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Attributes") float Stamina = 0.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Attributes") float MaxStamina = 100.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Attributes") float StaminaRechargeRate = 25.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Attributes") float Poise;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Attributes") float MaxPoise;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Attributes") bool bIsDead = false;
-	bool bStaminaCanRecharge = true;
-	FTimerHandle ResetStaminaRechargeTimer;
-	FTimerHandle ResetPoiseRechargeTimer;*/
-
 	FVector mInputVector;
 
 	AEnemy* TargetEnemy = nullptr;
@@ -202,12 +190,13 @@ public:
 	// Input
 	void Move(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
-	void Attack(const FInputActionValue& value);
-	void Interact(const FInputActionValue& value);
 	void Menu(const FInputActionValue& value);
+	void Interact(const FInputActionValue& value);
 	void ToggleLockOn(const FInputActionValue& value);
+	void Attack(const FInputActionValue& value);
 	void StartBlock(const FInputActionValue& value);
 	void EndBlock(const FInputActionValue& value);
+	void Dodge(const FInputActionValue& value);
 	
 	void OnePressed(const FInputActionValue& value);
 	void TwoPressed(const FInputActionValue& value);
@@ -217,14 +206,6 @@ public:
 	// Animation
 
 	// Base Character
-	void DepletePoise(float Cost);
-	void SetPoiseRechargeTimer();
-	void ResetPoise();
-
-	virtual void Stagger();
-	void Recoil();
-
-	UFUNCTION(BlueprintCallable) void ResetStunned();
 
 	virtual void Die(AActor* Causer);
 	UFUNCTION(BlueprintCallable) virtual void DeathEnd();
@@ -236,31 +217,26 @@ public:
 	UFUNCTION(BlueprintCallable) void DeactivateWeapon();
 
 	// Attributes
-	UFUNCTION(BlueprintPure) float GetHealth() { if (mAttributes) return mAttributes->Health; return 0.0f; }
-	UFUNCTION(BlueprintPure) float GetMaxHealth() { if (mAttributes) return mAttributes->MaxHealth; return 0.0f; }
-	UFUNCTION(BlueprintPure) float GetStamina() { if (mAttributes) return mAttributes->Stamina; return 0.0f; }
-	UFUNCTION(BlueprintPure) float GetMaxStamina() { if (mAttributes) return mAttributes->MaxStamina; return 0.0f; }
 
-	void SetHealth(float Amount);
-	UFUNCTION(BlueprintCallable) FORCEINLINE void SetMaxHealth(float Amount) { if (mAttributes)mAttributes->MaxHealth = Amount; }
-
+	// Interacting
 	void CheckOverlappingPickups();
 	void SetPickups(APickup* Pickup, bool Overlapped);
 
 	bool FindBestTargetEnemy();
 	void LockOnEnemy();
 	void UntargetEnemy();
-	UFUNCTION(BlueprintCallable)
-	void ResetState();
+	UFUNCTION(BlueprintCallable)void ResetState();
 
 	void SwitchMovementStyle(EMovementStyle MovementStyle);
 	void SwitchCameraMovement(ECameraMovement CameraMovement);
 	void LookAtTarget();
 
-	void LookAtInventory();
-
+	// Equipment
 	UFUNCTION(BlueprintCallable) void EquipWeaponR(int32 Index);
 	UFUNCTION(BlueprintCallable) void EquipWeaponL(int32 Index);
+	
+	// Inventory
+	void LookAtInventory();
 
 	void QuickSortUsables(TArray<AUsable*> Inventory, int32 Low, int32 High);
 	int32 Partition(TArray<AUsable*> Inventory, int32 Low, int32 High);
@@ -285,23 +261,19 @@ public:
 	UFUNCTION(BlueprintCallable) UTexture2D* GetGearImage(int32 Index, int32& ItemCount);
 
 	void GetGear(int32 Index);
-	UFUNCTION(BlueprintCallable)
-	void UseDesiredGear();
+	UFUNCTION(BlueprintCallable)void UseDesiredGear();
 
 	void SetAttackModifier(int32 Time, float Modifier);
 	void ResetAttackModifier();
-	UFUNCTION(BlueprintCallable)
-	float GetAttackTimeRemaining();
+	UFUNCTION(BlueprintCallable) float GetAttackTimeRemaining();
 
 	void SetDefenseModifier(int32 Time, float Modifier);
 	void ResetDefenseModifier();
-	UFUNCTION(BlueprintCallable)
-	float GetDefenseTimeRemaining();
+	UFUNCTION(BlueprintCallable) float GetDefenseTimeRemaining();
 
 	void SetMobilityModifier(int32 Time, float Modifier);
 	void ResetMobilityModifier();
-	UFUNCTION(BlueprintCallable)
-	float GetMobilityTimeRemaining();
+	UFUNCTION(BlueprintCallable) float GetMobilityTimeRemaining();
 
 	void Heal(float Amount);
 
@@ -315,16 +287,13 @@ public:
 	UFUNCTION(BlueprintCallable) void GetGearInventoryStackImageAndCount(int32 StackIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
 	void AddToGearSlot(AUsable* UsableToAdd, int32 SlotIndex);
 
-	void Dodge();
-	void Block();
-
-	void SetStaminaRechargeTimer(float RechargeDelay);
-	void ResetStaminaRecharge();
-	void UseStamina(float StaminaCost, float RechargeDelay);
-
-	UFUNCTION(BlueprintCallable)
-	void ResetDodge();
+	// Combat
+	void Stagger();
+	void Recoil();
+	void BlockHit();
 
 	UFUNCTION(BlueprintCallable) void OpenCombo();
 	UFUNCTION(BlueprintCallable) void ResetCombo();
+	UFUNCTION(BlueprintCallable) void ResetDodge();
+	UFUNCTION(BlueprintCallable) void ResetStunned();
 };
