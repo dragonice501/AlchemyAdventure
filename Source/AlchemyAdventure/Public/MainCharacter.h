@@ -15,18 +15,19 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetAttackTimer, boo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetDefenseTimer, bool, bToggleDefenseTimer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetMobilityTimer, bool, bToggleMobilityTimer);
 
-class UInputMappingContext;
-class UInputAction;
-class USpringArmComponent;
-class UCameraComponent;
-class USphereComponent;
-class UCharacterAttributesComponent;
-class AMainPlayerController;
 class AEnemy;
 class AItem;
+class AMainPlayerController;
 class APickup;
 class AResource;
 class AUsable;
+class UCameraComponent;
+class UCharacterAttributesComponent;
+class UInputMappingContext;
+class UInputAction;
+class UPlayerInventoryComponent;
+class USpringArmComponent;
+class USphereComponent;
 
 enum class EMovementStyle : uint8
 {
@@ -52,6 +53,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) float SpringArmDefaultLength = 500.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) UCameraComponent* Camera;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) USphereComponent* EnemyDetectionSphere;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UCharacterAttributesComponent* mAttributes;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UPlayerInventoryComponent* mInventory;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) AMainPlayerController* MainPlayerController;
 
@@ -80,9 +83,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Character | Animation") UAnimMontage* DeathMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Character | Animation") UAnimMontage* RecoilMontage;
 
-	// Attributes
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) UCharacterAttributesComponent* mAttributes;
-
 	FVector mInputVector;
 
 	AEnemy* TargetEnemy = nullptr;
@@ -103,16 +103,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Player Character | Combat") float StunChance;
 	bool bStunned = false;
 
-	// Inventory
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player Character | Equipment") AWeapon* RightHandEquipment = nullptr;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player Character | Equipment") AWeapon* LeftHandEquipment = nullptr;
+	// Equipment
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player Character | Equipment") AWeapon* rightHandEquipment = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player Character | Equipment") AWeapon* leftHandEquipment = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Player Character | Equipment") TSubclassOf<AWeapon> StartingWeapon;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
 	int32 RighHandIndex = -1;
 	int32 LeftHandIndex = -1;
+	int32 EquippedWeaponIndex = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<TSubclassOf<AWeapon>> EquipmentInventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<AResource*> ResourceInventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<AUsable*> UsablesInventory;
+	// Inventory
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<TSubclassOf<AUsable>> StartingUsables;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<TSubclassOf<AUsable>> PotionMap;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<AUsable*> GearSlotOneInventory;
@@ -122,12 +122,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<APickup*> OverlappingPickups;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AItem>PickupItem;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
-	APickup* CurrentPickup;
+	APickup* currentPickup;
 	bool bCanPickup = false;
 	int32 PickupsCount = 0;
-
-	int32 EquippedWeaponIndex = 0;
 
 	// Movement
 	float MaxWalkSpeed = 400.f;
@@ -203,10 +200,7 @@ public:
 	void ThreePressed(const FInputActionValue& value);
 	void FourPressed(const FInputActionValue& value);
 
-	// Animation
-
 	// Base Character
-
 	virtual void Die(AActor* Causer);
 	UFUNCTION(BlueprintCallable) virtual void DeathEnd();
 
@@ -215,8 +209,6 @@ public:
 
 	UFUNCTION(BlueprintCallable) void ActivateWeapon();
 	UFUNCTION(BlueprintCallable) void DeactivateWeapon();
-
-	// Attributes
 
 	// Interacting
 	void CheckOverlappingPickups();
@@ -238,28 +230,7 @@ public:
 	// Inventory
 	void LookAtInventory();
 
-	void QuickSortUsables(TArray<AUsable*> Inventory, int32 Low, int32 High);
-	int32 Partition(TArray<AUsable*> Inventory, int32 Low, int32 High);
-	void Swap(int32 i, int32 j);
-	void DutchQuickSort(TArray<AUsable*> Inventory, int Left, int Right);
-	void DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int i, int j);
-
-	UFUNCTION(BlueprintCallable) bool RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage);
-	UFUNCTION(BlueprintCallable) void ResetCraftingIngredients(bool ResetFirst, bool ResetSecond);
-
-	UFUNCTION(BlueprintCallable) void GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource);
-	UFUNCTION(BlueprintCallable) void GetResourceImage(int32 ResourceStackIndex, UTexture2D*& ResourceImage);
-	UFUNCTION(BlueprintCallable) void GetResourceCount(int32 ResourceStackIndex, int32& ResourceCount);
-
-	UFUNCTION(BlueprintCallable) UTexture2D* CheckCanCraft();
-	UFUNCTION(BlueprintCallable) bool AddUsable();
-	UFUNCTION(BlueprintCallable) bool CheckCanCraftMore();
-	UFUNCTION(BlueprintCallable) int32 GetIngredientsCount(bool First, bool Second);
-	UFUNCTION(BlueprintCallable) UTexture2D* GetIngredientImage(bool First, bool Second);
-
-	UFUNCTION(BlueprintCallable) UTexture2D* GetEquipmentImage(int32 Index);
-	UFUNCTION(BlueprintCallable) UTexture2D* GetGearImage(int32 Index, int32& ItemCount);
-
+	// Gear
 	void GetGear(int32 Index);
 	UFUNCTION(BlueprintCallable)void UseDesiredGear();
 
@@ -278,14 +249,6 @@ public:
 	void Heal(float Amount);
 
 	void PlayUseMontage(FName MontageSection);
-
-	UFUNCTION(BlueprintCallable) void SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex);
-	UFUNCTION(BlueprintCallable) void GetGearStack(int32 StackIndex, int32 SlotIndex);
-	UFUNCTION(BlueprintCallable) void RemoveGearStack(int32 SlotIndex);
-	UFUNCTION(BlueprintCallable) void SwapGearSlot(int32 FirstSlot, int32 SecondSlot);
-	UFUNCTION(BlueprintCallable) void GetGearSlotImageAndCount(int32 SlotIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
-	UFUNCTION(BlueprintCallable) void GetGearInventoryStackImageAndCount(int32 StackIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear);
-	void AddToGearSlot(AUsable* UsableToAdd, int32 SlotIndex);
 
 	// Combat
 	void Stagger();

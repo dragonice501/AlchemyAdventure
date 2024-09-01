@@ -3,6 +3,7 @@
 
 #include "MainPlayerController.h"
 #include "CharacterAttributesComponent.h"
+#include "PlayerInventoryComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
@@ -171,10 +172,10 @@ void AMainPlayerController::SaveGame()
 		SaveGameInstance->PlayerLocation = MainCharacter->GetActorLocation();
 		SaveGameInstance->PlayerRotation = MainCharacter->GetActorRotation();
 		SaveGameInstance->Health = MainCharacter->mAttributes->health;
-		SaveGameInstance->EquipmentInventory = MainCharacter->EquipmentInventory;
+		SaveGameInstance->EquipmentInventory = MainCharacter->mInventory->weaponInventory;
 		SaveGameInstance->RightHandIndex = MainCharacter->RighHandIndex;
-		SaveGameInstance->ResourceInventory = MainCharacter->ResourceInventory;
-		SaveGameInstance->UsablesInventory = MainCharacter->UsablesInventory;
+		SaveGameInstance->ResourceInventory = MainCharacter->mInventory->resourceInventory;
+		SaveGameInstance->UsablesInventory = MainCharacter->mInventory->usablesInventory;
 		SaveGameInstance->GearSlotOneInventory = MainCharacter->GearSlotOneInventory;
 		SaveGameInstance->GearSlotTwoInventory = MainCharacter->GearSlotTwoInventory;
 		SaveGameInstance->GearSlotThreeInventory = MainCharacter->GearSlotThreeInventory;
@@ -196,11 +197,11 @@ void AMainPlayerController::LoadGame()
 		MainCharacter->SetActorRotation(LoadGameInstance->PlayerRotation);
 
 		MainCharacter->mAttributes->health = LoadGameInstance->Health;
-		MainCharacter->EquipmentInventory = LoadGameInstance->EquipmentInventory;
+		MainCharacter->mInventory->weaponInventory = LoadGameInstance->EquipmentInventory;
 		MainCharacter->RighHandIndex = LoadGameInstance->RightHandIndex;
 		if (MainCharacter->RighHandIndex != -1) MainCharacter->EquipWeaponR(MainCharacter->RighHandIndex);
-		MainCharacter->ResourceInventory = LoadGameInstance->ResourceInventory;
-		MainCharacter->UsablesInventory = LoadGameInstance->UsablesInventory;
+		MainCharacter->mInventory->resourceInventory = LoadGameInstance->ResourceInventory;
+		MainCharacter->mInventory->usablesInventory = LoadGameInstance->UsablesInventory;
 		MainCharacter->GearSlotOneInventory = LoadGameInstance->GearSlotOneInventory;
 		MainCharacter->GearSlotTwoInventory = LoadGameInstance->GearSlotTwoInventory;
 		MainCharacter->GearSlotThreeInventory = LoadGameInstance->GearSlotThreeInventory;

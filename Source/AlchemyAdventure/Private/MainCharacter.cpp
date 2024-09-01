@@ -7,6 +7,7 @@
 #include "Item.h"
 #include "MainPlayerController.h"
 #include "Pickup.h"
+#include "PlayerInventoryComponent.h"
 #include "Resource.h"
 #include "Usable.h"
 #include "Weapon.h"
@@ -38,6 +39,7 @@ AMainCharacter::AMainCharacter()
 	EnemyDetectionSphere->SetupAttachment(RootComponent);
 
 	mAttributes = CreateDefaultSubobject<UCharacterAttributesComponent>(TEXT("CharacterAttributes"));
+	mInventory = CreateDefaultSubobject<UPlayerInventoryComponent>(TEXT("PlayerInventory"));
 
 	SwitchMovementStyle(EMovementStyle::EMS_Free);
 	SwitchCameraMovement(ECameraMovement::ECM_Free);
@@ -57,12 +59,12 @@ void AMainCharacter::BeginPlay()
 	{
 		for (int i = 0; i < StartingUsables.Num(); i++)
 		{
-			AUsable* Usable = Cast<AUsable>(StartingUsables[i]->GetDefaultObject());
-			if (Usable)
+			AUsable* usable = Cast<AUsable>(StartingUsables[i]->GetDefaultObject());
+			if (usable && mInventory)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("UsablePointer"));
-				Usable->BuildUsable(*Usable->StartingName);
-				UsablesInventory.Add(Usable);
+				usable->BuildUsable(*usable->StartingName);
+				mInventory->AddToUsuablesInventory(usable);
 			}
 		}
 	}
@@ -246,31 +248,31 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 {
 	if (bCanPickup && !bInventoryOpen)
 	{
-		if (CurrentPickup->BPPickupItem)
+		if (currentPickup->BPPickupItem)
 		{
-			TSubclassOf<AWeapon> PickupWeapon = CurrentPickup->BPPickupItem;
-			if (PickupWeapon)
+			TSubclassOf<AWeapon> PickupWeapon = currentPickup->BPPickupItem;
+			if (PickupWeapon && mInventory)
 			{
-				EquipmentInventory.Add(PickupWeapon);
-				if (EquipmentInventory.Num() == 1) EquippedWeaponIndex = 0;
+				mInventory->AddToWeaponInventory(PickupWeapon);
+				if (mInventory->weaponInventory.Num() == 1) EquippedWeaponIndex = 0;
 
-				CurrentPickup->Destroy();
+				currentPickup->Destroy();
 				DynamicMulticastSetImageAndCount.Broadcast();
 			}
 
-			TSubclassOf<AResource> PickupResource = CurrentPickup->BPPickupItem;
+			TSubclassOf<AResource> PickupResource = currentPickup->BPPickupItem;
 			if (PickupResource)
 			{
-				AResource* Resource = Cast<AResource>(PickupResource->GetDefaultObject());
-				if (Resource)
+				AResource* resource = Cast<AResource>(PickupResource->GetDefaultObject());
+				if (resource && mInventory)
 				{
-					Resource->BuildResource(CurrentPickup->ItemName);
-					FString Name = Resource->ResourceName;
+					resource->BuildResource(currentPickup->ItemName);
+					FString Name = resource->ResourceName;
 					//Resource->SetActorLabel(Name);
-					ResourceInventory.Add(Resource);
-					ResourceInventory.Sort();
+					mInventory->AddToResourceInventory(resource);
+					//mInventory->SortResourceInventory();
 
-					CurrentPickup->Destroy();
+					currentPickup->Destroy();
 					DynamicMulticastSetImageAndCount.Broadcast();
 				}
 			}
@@ -285,7 +287,7 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 
 void AMainCharacter::Attack(const FInputActionValue& value)
 {
-	if (bAttacking || bBlocking || bDodging || bStunned || bInventoryOpen || RightHandEquipment == nullptr) return;
+	if (bAttacking || bBlocking || bDodging || bStunned || bInventoryOpen || rightHandEquipment == nullptr) return;
 	if (mAttributes)
 	{
 		if (mAttributes->stamina < 0.0f) return;
@@ -309,8 +311,8 @@ void AMainCharacter::Attack(const FInputActionValue& value)
 
 		if(mAttributes)
 		{
-			mAttributes->SetStaminaRechargeTimer(RightHandEquipment->StaminaRechargeDelay);
-			mAttributes->UseStamina(RightHandEquipment->StaminaCost);
+			mAttributes->SetStaminaRechargeTimer(rightHandEquipment->StaminaRechargeDelay);
+			mAttributes->UseStamina(rightHandEquipment->StaminaCost);
 			mAttributes->ResetPoiseRecharge();
 		}
 	}
@@ -318,12 +320,12 @@ void AMainCharacter::Attack(const FInputActionValue& value)
 
 void AMainCharacter::StartBlock(const FInputActionValue& value)
 {
-	if (!bAttacking && !bDodging && !bInventoryOpen && RightHandEquipment)
+	if (!bAttacking && !bDodging && !bInventoryOpen && rightHandEquipment)
 	{
 		bBlocking = true;
-		if (RightHandEquipment)
+		if (rightHandEquipment)
 		{
-			RightHandEquipment->ActivateGuardCollision();
+			rightHandEquipment->ActivateGuardCollision();
 		}
 	}
 }
@@ -331,9 +333,9 @@ void AMainCharacter::StartBlock(const FInputActionValue& value)
 void AMainCharacter::EndBlock(const FInputActionValue& value)
 {
 	bBlocking = false;
-	if (RightHandEquipment)
+	if (rightHandEquipment)
 	{
-		RightHandEquipment->DeactivateGuardCollision();
+		rightHandEquipment->DeactivateGuardCollision();
 	}
 }
 
@@ -522,22 +524,22 @@ void AMainCharacter::CheckOverlappingPickups()
 			float SqrDistance = FVector::DistSquared(GetActorLocation(), Pickup->GetActorLocation());
 			if (SqrDistance < BestPickup)
 			{
-				CurrentPickup = Pickup;
+				currentPickup = Pickup;
 				BestPickup = SqrDistance;
 			}
 		}
 
-		if (CurrentPickup)
+		if (currentPickup)
 		{
-			MainPlayerController->DisplayPickupPrompt(CurrentPickup->GetPickupPrompt());
+			MainPlayerController->DisplayPickupPrompt(currentPickup->GetPickupPrompt());
 		}
 	}
 	else if (OverlappingPickups.Num() == 1)
 	{
-		CurrentPickup = OverlappingPickups[0];
-		if (CurrentPickup)
+		currentPickup = OverlappingPickups[0];
+		if (currentPickup)
 		{
-			MainPlayerController->DisplayPickupPrompt(CurrentPickup->GetPickupPrompt());
+			MainPlayerController->DisplayPickupPrompt(currentPickup->GetPickupPrompt());
 		}
 	}
 }
@@ -734,555 +736,42 @@ void AMainCharacter::LookAtInventory()
 
 void AMainCharacter::EquipWeaponR(int32 Index)
 {
-	if (EquipmentInventory.Num() > Index)
+	if(mInventory)
 	{
-		if (EquipmentInventory[Index])
+		if (mInventory->weaponInventory.Num() > Index)
 		{
-			EquipRightHand(EquipmentInventory[Index]);
-			RighHandIndex = Index;
+			if (mInventory->weaponInventory[Index])
+			{
+				EquipRightHand(mInventory->weaponInventory[Index]);
+				RighHandIndex = Index;
+			}
 		}
-	}
-	else
-	{
-		EquipRightHand(nullptr);
-		RighHandIndex = -1;
+		else
+		{
+			EquipRightHand(nullptr);
+			RighHandIndex = -1;
+		}
 	}
 }
 
 void AMainCharacter::EquipWeaponL(int32 Index)
 {
-	if (EquipmentInventory.Num() > Index)
+	if (mInventory)
 	{
-		if (EquipmentInventory[Index])
+		if (mInventory->weaponInventory.Num() > Index)
 		{
-			if (RightHandEquipment)
+			if (mInventory->weaponInventory[Index])
 			{
-
-			}
-			EquipLeftHand(EquipmentInventory[Index]);
-		}
-	}
-	else
-	{
-		EquipLeftHand(nullptr);
-	}
-}
-
-bool AMainCharacter::RemoveAndSetIngredient(int32 ResourceStackIndex, int32 ResourceSelectIndex, UTexture2D*& ResourceImage)
-{
-	int32 Index = 0;
-	int32 ResourceIndex = 0;
-
-	if (ResourceInventory.Num() > 0)
-	{
-		AResource* CurrentResource = nullptr;
-		AResource* PreviousResource = nullptr;
-
-		for (int i = 0; i < ResourceInventory.Num(); i++)
-		{
-			ResourceIndex = i;
-			if (i == 0) PreviousResource = ResourceInventory[0];
-			else PreviousResource = CurrentResource;
-			CurrentResource = ResourceInventory[i];
-
-			if (CurrentResource->ResourceName == PreviousResource->ResourceName)
-			{
-				if (Index == ResourceStackIndex)
-				{
-					ResourceImage = CurrentResource->ResourceImage;
-					if (ResourceSelectIndex == 0)
-					{
-						if (SetIngredientsOneInv.Num() > 0)
-						{
-							if (SetIngredientsOneInv[0]->ResourceName != CurrentResource->ResourceName)
-							{
-								while (SetIngredientsOneInv.Num() > 0)
-								{
-									ResourceInventory.Add(SetIngredientsOneInv[0]);
-									SetIngredientsOneInv.RemoveAt(0);
-								}
-								SetIngredientsOneInv.Add(CurrentResource);
-								ResourceInventory.RemoveAt(i);
-								ResourceInventory.Sort();
-							}
-							else
-							{
-								SetIngredientsOneInv.Add(CurrentResource);
-								ResourceInventory.RemoveAt(ResourceIndex);
-							}
-						}
-						else
-						{
-							SetIngredientsOneInv.Add(CurrentResource);
-							ResourceInventory.RemoveAt(ResourceIndex);
-						}
-
-						return true;
-					}
-					else if (ResourceSelectIndex == 1)
-					{
-						if (SetIngredientsTwoInv.Num() > 0)
-						{
-							if (SetIngredientsTwoInv[0]->ResourceName != CurrentResource->ResourceName)
-							{
-								while (SetIngredientsTwoInv.Num() > 0)
-								{
-									ResourceInventory.Add(SetIngredientsTwoInv[0]);
-									SetIngredientsTwoInv.RemoveAt(0);
-								}
-								SetIngredientsTwoInv.Add(CurrentResource);
-								ResourceInventory.RemoveAt(i);
-								ResourceInventory.Sort();
-							}
-							else
-							{
-								SetIngredientsTwoInv.Add(CurrentResource);
-								ResourceInventory.RemoveAt(ResourceIndex);
-							}
-						}
-						else
-						{
-							SetIngredientsTwoInv.Add(CurrentResource);
-							ResourceInventory.RemoveAt(ResourceIndex);
-						}
-
-						return true;
-					}
-				}
-			}
-			else if (CurrentResource->ResourceName != PreviousResource->ResourceName)
-			{
-				Index++;
-				if (Index == ResourceStackIndex)
-				{
-					ResourceImage = CurrentResource->ResourceImage;
-					if (ResourceSelectIndex == 0)
-					{
-						if (SetIngredientsOneInv.Num() > 0)
-						{
-							if (SetIngredientsOneInv[0]->ResourceName != CurrentResource->ResourceName)
-							{
-								while (SetIngredientsOneInv.Num() > 0)
-								{
-									ResourceInventory.Add(SetIngredientsOneInv[0]);
-									SetIngredientsOneInv.RemoveAt(0);
-								}
-								SetIngredientsOneInv.Add(CurrentResource);
-								ResourceInventory.RemoveAt(i);
-								ResourceInventory.Sort();
-							}
-							else
-							{
-								SetIngredientsOneInv.Add(CurrentResource);
-								ResourceInventory.RemoveAt(ResourceIndex);
-							}
-						}
-						else
-						{
-							SetIngredientsOneInv.Add(CurrentResource);
-							ResourceInventory.RemoveAt(ResourceIndex);
-						}
-
-						return true;
-					}
-					else if (ResourceSelectIndex == 1)
-					{
-						if (SetIngredientsTwoInv.Num() > 0)
-						{
-							if (SetIngredientsTwoInv[0]->ResourceName != CurrentResource->ResourceName)
-							{
-								while (SetIngredientsTwoInv.Num() > 0)
-								{
-									ResourceInventory.Add(SetIngredientsTwoInv[0]);
-									SetIngredientsTwoInv.RemoveAt(0);
-								}
-								SetIngredientsTwoInv.Add(CurrentResource);
-								ResourceInventory.RemoveAt(i);
-								ResourceInventory.Sort();
-							}
-							else
-							{
-								SetIngredientsTwoInv.Add(CurrentResource);
-								ResourceInventory.RemoveAt(ResourceIndex);
-							}
-						}
-						else
-						{
-							SetIngredientsTwoInv.Add(CurrentResource);
-							ResourceInventory.RemoveAt(ResourceIndex);
-						}
-
-						return true;
-					}
-				}
+				EquipLeftHand(mInventory->weaponInventory[Index]);
+				LeftHandIndex = Index;
 			}
 		}
-	}
-
-	return false;
-}
-
-void AMainCharacter::ResetCraftingIngredients(bool ResetFirst, bool ResetSecond)
-{
-	if (SetIngredientsOneInv.Num() > 0 && ResetFirst)
-	{
-		while (SetIngredientsOneInv.Num() > 0)
+		else
 		{
-			ResourceInventory.Add(SetIngredientsOneInv[0]);
-			SetIngredientsOneInv.RemoveAt(0);
+			EquipLeftHand(nullptr);
+			LeftHandIndex = -1;
 		}
 	}
-
-	if (SetIngredientsTwoInv.Num() > 0 && ResetSecond)
-	{
-		while (SetIngredientsTwoInv.Num() > 0)
-		{
-			ResourceInventory.Add(SetIngredientsTwoInv[0]);
-			SetIngredientsTwoInv.RemoveAt(0);
-		}
-	}
-
-	ResourceInventory.Sort();
-}
-
-void AMainCharacter::GetResource(int32 ResourceStackIndex, int32 InUseIngredientIndex, int32& ResourceInventoryIndex, UTexture2D*& ResourceImage, bool& bHasResource)
-{
-	int32 Index = 0;
-
-	if(ResourceInventory.Num() > 0)
-	{
-		AResource* CurrentResource = nullptr;
-		AResource* PreviousResource = nullptr;
-
-		for (int i = 0; i < ResourceInventory.Num(); i++)
-		{
-			ResourceInventoryIndex = i;
-			if (i == 0) PreviousResource = ResourceInventory[0];
-			else PreviousResource = CurrentResource;
-			CurrentResource = ResourceInventory[i];
-
-			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
-			{
-				if (Index == ResourceStackIndex)
-				{
-					if (i - 1 != InUseIngredientIndex)
-					{
-						ResourceImage = PreviousResource->ResourceImage;
-						ResourceInventoryIndex = i - 1;
-						bHasResource = true;
-						return;
-					}
-					/*else if (i != InUseIngredientIndex)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("new previous"));
-						ResourceImage = PreviousResource->ResourceImage;
-						ResourceInventoryIndex = i - 1;
-						bHasResource = true;
-						return;
-					}*/
-				}
-				Index++;	
-			}
-			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
-			{
-				if (Index == ResourceStackIndex)
-				{
-					if (i != InUseIngredientIndex)
-					{
-						ResourceImage = PreviousResource->ResourceImage;
-						ResourceInventoryIndex = i;
-						bHasResource = true;
-						return;
-					}
-					else if (i - 1 != InUseIngredientIndex && ResourceInventory[i]->ResourceName == CurrentResource->ResourceName)
-					{
-						ResourceImage = PreviousResource->ResourceImage;
-						ResourceInventoryIndex = i - 1;
-						bHasResource = true;
-						return;
-					}
-				}
-			}
-		}
-
-		if (Index == ResourceStackIndex && ResourceInventoryIndex != InUseIngredientIndex)
-		{
-			ResourceImage = CurrentResource->ResourceImage;
-			bHasResource = true;
-			return;
-		}
-	}
-
-	bHasResource = false;
-}
-
-void AMainCharacter::GetResourceImage(int32 ResourceStackIndex, UTexture2D*& ResourceImage)
-{
-	int32 Index = 0;
-
-	if (ResourceInventory.Num() > 0)
-	{
-		AResource* CurrentResource = nullptr;
-		AResource* PreviousResource = nullptr;
-
-		for (int i = 0; i < ResourceInventory.Num(); i++)
-		{
-			if (i == 0) PreviousResource = ResourceInventory[0];
-			else PreviousResource = CurrentResource;
-			CurrentResource = ResourceInventory[i];
-
-			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
-			{
-				if (Index == ResourceStackIndex)
-				{
-					ResourceImage = PreviousResource->ResourceImage;
-					return;
-				}
-				Index++;
-			}
-			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
-			{
-				if (Index == ResourceStackIndex)
-				{
-					ResourceImage = CurrentResource->ResourceImage;
-					return;
-				}
-			}
-		}
-
-		if (Index == ResourceStackIndex)
-		{
-			ResourceImage = CurrentResource->ResourceImage;
-			return;
-		}
-	}
-}
-
-void AMainCharacter::GetResourceCount(int32 ResourceStackIndex, int32& ResourceCount)
-{
-	int32 Index = 0;
-	int32 ItemCount = 0;
-
-	if (ResourceInventory.Num() > 0)
-	{
-		AResource* CurrentResource = nullptr;
-		AResource* PreviousResource = nullptr;
-
-		for (int i = 0; i < ResourceInventory.Num(); i++)
-		{
-			if (i == 0) PreviousResource = ResourceInventory[0];
-			else PreviousResource = CurrentResource;
-			CurrentResource = ResourceInventory[i];
-
-			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
-			{
-				if (Index == ResourceStackIndex)
-				{
-					ResourceCount = ItemCount;
-					return;
-				}
-				Index++;
-				ItemCount = 1;
-			}
-			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
-			{
-				ItemCount++;
-			}
-		}
-
-		if (Index == ResourceStackIndex)
-		{
-			ResourceCount = ItemCount;
-			return;
-		}
-
-		ItemCount = 0;
-	}
-}
-
-UTexture2D* AMainCharacter::CheckCanCraft()
-{
-	UTexture2D* Image = nullptr;
-
-	if (SetIngredientsOneInv.Num() > 0)
-	{
-		if (SetIngredientsTwoInv.Num() > 0)
-		{
-			FName Craftable = *SetIngredientsOneInv[0]->CheckCanCombine(SetIngredientsTwoInv[0]);
-			if (Craftable != "")
-			{
-				AUsable* Usable = NewObject<AUsable>();
-				if (Usable)
-				{
-					Usable->BuildUsable(Craftable);
-					if (Usable->UsableImage)
-					{
-						Image = Usable->UsableImage;
-						return Image;
-					}
-				}
-			}
-		}
-	}
-
-	return Image;
-}
-
-bool AMainCharacter::AddUsable()
-{
-	if (SetIngredientsOneInv.Num() > 0)
-	{
-		if (SetIngredientsTwoInv.Num() > 0)
-		{
-			FName Craftable = *SetIngredientsOneInv[0]->CheckCanCombine(SetIngredientsTwoInv[0]);
-			if (Craftable != "")
-			{
-				AUsable* Usable = NewObject<AUsable>();
-				if (Usable)
-				{
-					Usable->BuildUsable(Craftable);
-					AUsable* UsableToAdd = Cast<AUsable>(PotionMap[Usable->UsableID]->GetDefaultObject());
-					FString Name = UsableToAdd->UsableName;
-					//UsableToAdd->SetActorLabel(Name);
-					UsablesInventory.Add(UsableToAdd);
-					//DutchQuickSort(UsablesInventory, 0, UsablesInventory.Num() - 1);
-
-					SetIngredientsOneInv.RemoveAt(0);
-					SetIngredientsTwoInv.RemoveAt(0);
-
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-bool AMainCharacter::CheckCanCraftMore()
-{
-	if (SetIngredientsOneInv.Num() > 0)
-	{
-		if (SetIngredientsTwoInv.Num() > 0)
-		{
-			FName Craftable = *SetIngredientsOneInv[0]->CheckCanCombine(SetIngredientsTwoInv[0]);
-			if (Craftable != "")
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-int32 AMainCharacter::GetIngredientsCount(bool First, bool Second)
-{
-	if (First)
-	{
-		return SetIngredientsOneInv.Num();
-	}
-	
-	if (Second)
-	{
-		return SetIngredientsTwoInv.Num();
-	}
-
-	return 0;
-}
-
-UTexture2D* AMainCharacter::GetIngredientImage(bool First, bool Second)
-{
-	if (First)
-	{
-		if (SetIngredientsOneInv.Num() > 0)
-		{
-			return SetIngredientsOneInv[0]->ResourceImage;
-		}
-	}
-	if (Second)
-	{
-		if (SetIngredientsTwoInv.Num() > 0)
-		{
-			return SetIngredientsTwoInv[0]->ResourceImage;
-		}
-	}
-
-	return nullptr;
-}
-
-UTexture2D* AMainCharacter::GetEquipmentImage(int32 Index)
-{
-	UTexture2D* Image = nullptr;
-	int ItemIndex = 1;
-
-	if (EquipmentInventory.Num() > 0)
-	{
-		for (int i = 0; i < EquipmentInventory.Num(); i++)
-		{
-			if (i == Index)
-			{
-				AWeapon* Weapon = Cast<AWeapon>(EquipmentInventory[i]->GetDefaultObject());
-				if (Weapon)
-				{
-					if (Weapon->ItemImage)
-					{
-						return Weapon->ItemImage;
-					}
-				}
-			}
-		}
-	}
-
-	return Image;
-}
-
-UTexture2D* AMainCharacter::GetGearImage(int32 Index, int32& ItemCount)
-{
-	UTexture2D* Image = nullptr;
-	int ItemIndex = 0;
-	ItemCount = 0;
-
-	if (Index == -1) return nullptr;
-
-	if (UsablesInventory.Num() > 0)
-	{
-		AUsable* CurrentUsable = nullptr;
-		AUsable* PreviousVisible = nullptr;
-
-		for (int i = 0; i < UsablesInventory.Num(); i++)
-		{
-			if (i == 0) PreviousVisible = UsablesInventory[0];
-			else PreviousVisible = CurrentUsable;
-			CurrentUsable = UsablesInventory[i];
-
-			if (CurrentUsable->UsableName != PreviousVisible->UsableName)
-			{
-				if (ItemIndex == Index)
-				{
-					return Image;
-				}
-				ItemIndex++;
-				ItemCount = 1;
-			}
-			else if (CurrentUsable->UsableName == PreviousVisible->UsableName)
-			{
-				ItemCount++;
-			}
-
-			if(ItemIndex == Index)
-			{
-				Image = CurrentUsable->UsableImage;
-			}
-			else
-			{
-				ItemCount = 0;
-				Image = nullptr;
-			}
-		}
-	}
-
-	return Image;
 }
 
 void AMainCharacter::GetGear(int32 Index)
@@ -1477,435 +966,6 @@ void AMainCharacter::PlayUseMontage(FName MontageSection)
 	}
 }
 
-void AMainCharacter::SetGearUseIndex(int32 GearBoxIndex, int32 DesiredInventoryIndex)
-{
-	int32 SwapIndex = -1;
-	int32 SwapValue = -1;
-
-	for (int i = 0; i < CurrentGearIndexes.Num(); i++)
-	{
-		if (i == GearBoxIndex)
-		{
-			SwapValue = CurrentGearIndexes[i];
-			CurrentGearIndexes[i] = DesiredInventoryIndex;
-		}
-
-		if (i != GearBoxIndex && CurrentGearIndexes[i] == DesiredInventoryIndex)
-		{
-			SwapIndex = i;
-		}
-	}
-
-	if (SwapIndex >= 0)
-	{
-		CurrentGearIndexes[SwapIndex] = SwapValue;
-	}
-}
-
-void AMainCharacter::GetGearStack(int32 StackIndex, int32 SlotIndex)
-{
-	int32 Index = 0;
-	int32 StartIndex = 0;
-	int32 EndIndex = 0;
-
-	if (UsablesInventory.Num() > 0)
-	{
-		AUsable* CurrentUsable = nullptr;
-		AUsable* PreviousUsable = nullptr;
-
-		for (int i = 0; i < UsablesInventory.Num(); i++)
-		{
-			if (i == 0) PreviousUsable = UsablesInventory[0];
-			else PreviousUsable = CurrentUsable;
-			CurrentUsable = UsablesInventory[i];
-
-			if (CurrentUsable->UsableName == PreviousUsable->UsableName)
-			{
-				if (Index == StackIndex)
-				{
-					if (i == 0) StartIndex = i;
-				}
-			}
-			if (CurrentUsable->UsableName != PreviousUsable->UsableName)
-			{
-				Index++;
-				if (Index == StackIndex)
-				{
-					StartIndex = i;
-				}
-			}
-		}
-
-		for (int i = StartIndex, j = 0; i < UsablesInventory.Num(); j++)
-		{
-			if (j == 0) PreviousUsable = UsablesInventory[i];
-			else PreviousUsable = CurrentUsable;
-			CurrentUsable = UsablesInventory[i];
-
-			if (CurrentUsable->UsableName == PreviousUsable->UsableName)
-			{
-				AddToGearSlot(UsablesInventory[StartIndex], SlotIndex);
-				UsablesInventory.RemoveAt(StartIndex);
-			}
-			else
-			{
-				return;
-			}
-		}
-	}
-}
-
-void AMainCharacter::RemoveGearStack(int32 SlotIndex)
-{
-	switch (SlotIndex)
-	{
-	case 0:
-		while (GearSlotOneInventory.Num() > 0)
-		{
-			UsablesInventory.Add(GearSlotOneInventory[0]);
-			GearSlotOneInventory.RemoveAt(0);
-		}
-		break;
-	case 1:
-		while (GearSlotTwoInventory.Num() > 0)
-		{
-			UsablesInventory.Add(GearSlotTwoInventory[0]);
-			GearSlotTwoInventory.RemoveAt(0);
-		}
-		break;
-	case 2:
-		while (GearSlotThreeInventory.Num() > 0)
-		{
-			UsablesInventory.Add(GearSlotThreeInventory[0]);
-			GearSlotThreeInventory.RemoveAt(0);
-		}
-		break;
-	case 3:
-		while (GearSlotFourInventory.Num() > 0)
-		{
-			UsablesInventory.Add(GearSlotFourInventory[0]);
-			GearSlotFourInventory.RemoveAt(0);
-		}
-		break;
-	}
-}
-
-void AMainCharacter::AddToGearSlot(AUsable* UsableToAdd, int32 SlotIndex)
-{
-	switch (SlotIndex)
-	{
-	case 0:
-		if (GearSlotOneInventory.Num() > 0)
-		{
-			if (GearSlotOneInventory[0]->UsableName != UsableToAdd->UsableName)
-			{
-				while(GearSlotOneInventory.Num() > 0)
-				{
-					UsablesInventory.Add(GearSlotOneInventory[0]);
-					GearSlotOneInventory.RemoveAt(0);
-				}
-			}
-		}
-		GearSlotOneInventory.Add(UsableToAdd);
-		break;
-	case 1:
-		if (GearSlotTwoInventory.Num() > 0)
-		{
-			if (GearSlotTwoInventory[0]->UsableName != UsableToAdd->UsableName)
-			{
-				while (GearSlotTwoInventory.Num() > 0)
-				{
-					UsablesInventory.Add(GearSlotTwoInventory[0]);
-					GearSlotTwoInventory.RemoveAt(0);
-				}
-			}
-		}
-		GearSlotTwoInventory.Add(UsableToAdd);
-		break;
-	case 2:
-		if (GearSlotThreeInventory.Num() > 0)
-		{
-			if (GearSlotThreeInventory[0]->UsableName != UsableToAdd->UsableName)
-			{
-				while (GearSlotThreeInventory.Num() > 0)
-				{
-					UsablesInventory.Add(GearSlotThreeInventory[0]);
-					GearSlotThreeInventory.RemoveAt(0);
-				}
-			}
-		}
-		GearSlotThreeInventory.Add(UsableToAdd);
-		break;
-	case 3:
-		if (GearSlotFourInventory.Num() > 0)
-		{
-			if (GearSlotFourInventory[0]->UsableName != UsableToAdd->UsableName)
-			{
-				while (GearSlotFourInventory.Num() > 0)
-				{
-					UsablesInventory.Add(GearSlotFourInventory[0]);
-					GearSlotFourInventory.RemoveAt(0);
-				}
-			}
-		}
-		GearSlotFourInventory.Add(UsableToAdd);
-		break;
-	}
-}
-
-void AMainCharacter::SwapGearSlot(int32 FirstSlot, int32 SecondSlot)
-{
-	TArray<AUsable*> TempOne;
-	TArray<AUsable*> TempTwo;
-
-	switch (FirstSlot)
-	{
-	case 0:
-		TempOne = GearSlotOneInventory;
-		break;
-	case 1:
-		TempOne = GearSlotTwoInventory;
-		break;
-	case 2:
-		TempOne = GearSlotThreeInventory;
-		break;
-	case 3:
-		TempOne = GearSlotFourInventory;
-		break;
-	}
-
-	switch (SecondSlot)
-	{
-	case 0:
-		TempTwo = GearSlotOneInventory;
-		GearSlotOneInventory = TempOne;
-		break;
-	case 1:
-		TempTwo = GearSlotTwoInventory;
-		GearSlotTwoInventory = TempOne;
-		break;
-	case 2:
-		TempTwo = GearSlotThreeInventory;
-		GearSlotThreeInventory = TempOne;
-		break;
-	case 3:
-		TempTwo = GearSlotFourInventory;
-		GearSlotFourInventory = TempOne;
-		break;
-	}
-
-	switch (FirstSlot)
-	{
-	case 0:
-		GearSlotOneInventory = TempTwo;
-		break;
-	case 1:
-		GearSlotTwoInventory = TempTwo;
-		break;
-	case 2:
-		GearSlotThreeInventory = TempTwo;
-		break;
-	case 3:
-		GearSlotFourInventory = TempTwo;
-		break;
-	}
-}
-
-void AMainCharacter::GetGearSlotImageAndCount(int32 SlotIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear)
-{
-	switch (SlotIndex)
-	{
-	case 0:
-		if (GearSlotOneInventory.Num() > 0)
-		{
-			OutImage = GearSlotOneInventory[0]->UsableImage;
-			Count = GearSlotOneInventory.Num();
-			HasGear = true;
-		}
-		else
-		{
-			HasGear = false;
-		}
-		break;
-	case 1:
-		if (GearSlotTwoInventory.Num() > 0)
-		{
-			OutImage = GearSlotTwoInventory[0]->UsableImage;
-			Count = GearSlotTwoInventory.Num();
-			HasGear = true;
-		}
-		else
-		{
-			HasGear = false;
-		}
-		break;
-	case 2:
-		if (GearSlotThreeInventory.Num() > 0)
-		{
-			OutImage = GearSlotThreeInventory[0]->UsableImage;
-			Count = GearSlotThreeInventory.Num();
-			HasGear = true;
-		}
-		else
-		{
-			HasGear = false;
-		}
-		break;
-	case 3:
-		if (GearSlotFourInventory.Num() > 0)
-		{
-			OutImage = GearSlotFourInventory[0]->UsableImage;
-			Count = GearSlotFourInventory.Num();
-			HasGear = true;
-		}
-		else
-		{
-			HasGear = false;
-		}
-		break;
-	}
-}
-
-void AMainCharacter::GetGearInventoryStackImageAndCount(int32 StackIndex, UTexture2D*& OutImage, int32& Count, bool& HasGear)
-{
-	int32 Index = 0;
-	Count = 0;
-	HasGear = false;
-
-	if (UsablesInventory.Num() > 0)
-	{
-		AUsable* PreviousUsable = nullptr;
-		AUsable* CurrentUsable = nullptr;
-
-		for (int i = 0; i < UsablesInventory.Num(); i++)
-		{
-			if (i == 0) PreviousUsable = UsablesInventory[0];
-			else PreviousUsable = CurrentUsable;
-			CurrentUsable = UsablesInventory[i];
-
-			if (CurrentUsable->UsableName == PreviousUsable->UsableName)
-			{
-				Count++;
-			}
-			else if (CurrentUsable->UsableName != PreviousUsable->UsableName)
-			{
-				if (Index == StackIndex)
-				{
-					OutImage = PreviousUsable->UsableImage;
-					HasGear = true;
-					return;
-				}
-				Index++;
-				Count = 1;
-			}
-		}
-
-		if (Index == StackIndex)
-		{
-			OutImage = CurrentUsable->UsableImage;
-			HasGear = true;
-			return;
-		}
-	}
-}
-
-void AMainCharacter::QuickSortUsables(TArray<AUsable*> Inventory, int32 Low, int32 High)
-{
-	if (Low < High)
-	{
-		int32 pi = Partition(Inventory, Low, High);
-
-		QuickSortUsables(Inventory, Low, pi - 1);
-		QuickSortUsables(Inventory, pi + 1, High);
-	}
-}
-
-int32 AMainCharacter::Partition(TArray<AUsable*> Inventory, int32 Low, int32 High)
-{
-	AUsable* Pivot = Inventory[High];
-
-	int32 i = Low - 1;
-
-	for (int32 j = Low; j <= High - 1; j++)
-	{
-		if (Inventory[j]->UsableID < Pivot->UsableID)
-		{
-			i++;
-			Swap(i, j);
-		}
-	}
-
-	Swap(i + 1, High);
-	return i + 1;
-}
-
-void AMainCharacter::DutchQuickSort(TArray<AUsable*> Inventory, int Left, int Right)
-{
-	if (Right <= Left) return;
-
-	int i = 0, j = 0;
-
-	DutchPartition(Inventory, Left, Right, i, j);
-
-	DutchQuickSort(Inventory, Left, j);
-	DutchQuickSort(Inventory, i, Right);
-}
-
-void AMainCharacter::DutchPartition(TArray<AUsable*> Arr, int Left, int Right, int i, int j)
-{
-	i = Left - 1;
-	j = Right;
-	int p = Left - 1, q = Right;
-	int v = Arr[Right]->UsableID;
-
-	while (true)
-	{
-		while (Arr[i++]->UsableID < v);
-
-		while (v < Arr[j--]->UsableID)
-		{
-			if (j == Left) break;
-		}
-
-		if (i >= j) break;
-
-		Swap(i, j);
-
-		if (Arr[i]->UsableID == v)
-		{
-			p++;
-			Swap(p, i);
-		}
-
-		if (Arr[j]->UsableID == v)
-		{
-			q--;
-			Swap(j, q);
-		}
-	}
-
-	Swap(i, Right);
-
-	j = i - 1;
-	for (int k = Left; k < p; k++, j--)
-	{
-		Swap(k, j);
-	}
-
-	i = i + 1;
-	for (int k = Right - 1; k > q; k--, i++)
-	{
-		Swap(i, k);
-	}
-}
-
-void AMainCharacter::Swap(int32 i, int32 j)
-{
-	AUsable* Temp = UsablesInventory[i];
-	UsablesInventory[i] = UsablesInventory[j];
-	UsablesInventory[j] = Temp;
-}
-
 void AMainCharacter::Stagger()
 {
 	bStunned = true;
@@ -1999,80 +1059,80 @@ void AMainCharacter::DeathEnd()
 	UKismetSystemLibrary::QuitGame(this, Cast<APlayerController>(GetController()), EQuitPreference::Quit, true);
 }
 
-void AMainCharacter::EquipRightHand(TSubclassOf<AWeapon> WeaponToEquip)
+void AMainCharacter::EquipRightHand(TSubclassOf<AWeapon> weaponToEquip)
 {
-	if (WeaponToEquip)
+	if (weaponToEquip)
 	{
-		if (RightHandEquipment != nullptr)
+		if (rightHandEquipment != nullptr)
 		{
-			RightHandEquipment->Destroy();
+			rightHandEquipment->Destroy();
 		}
 
-		AActor* Weapon = GetWorld()->SpawnActor(WeaponToEquip);
-		const USkeletalMeshSocket* RightHandSocket = GetMesh()->GetSocketByName("Weapon_R");
-		if (RightHandSocket)
+		AActor* weapon = GetWorld()->SpawnActor(weaponToEquip);
+		const USkeletalMeshSocket* rightHandSocket = GetMesh()->GetSocketByName("Weapon_R");
+		if (rightHandSocket)
 		{
-			RightHandSocket->AttachActor(Weapon, GetMesh());
+			rightHandSocket->AttachActor(weapon, GetMesh());
 		}
 
-		RightHandEquipment = Cast<AWeapon>(Weapon);
-		if (RightHandEquipment)
+		rightHandEquipment = Cast<AWeapon>(weapon);
+		if (rightHandEquipment)
 		{
-			RightHandEquipment->SetMainCharacter(this);
+			rightHandEquipment->SetMainCharacter(this);
 		}
 	}
-	else if (WeaponToEquip == nullptr)
+	else if (weaponToEquip == nullptr)
 	{
-		if (RightHandEquipment != nullptr)
+		if (rightHandEquipment != nullptr)
 		{
-			RightHandEquipment->Destroy();
+			rightHandEquipment->Destroy();
 		}
 	}
 }
 
-void AMainCharacter::EquipLeftHand(TSubclassOf<AWeapon> WeaponToEquip)
+void AMainCharacter::EquipLeftHand(TSubclassOf<AWeapon> weaponToEquip)
 {
-	if (WeaponToEquip)
+	if (weaponToEquip)
 	{
-		if (LeftHandEquipment != nullptr)
+		if (leftHandEquipment != nullptr)
 		{
-			LeftHandEquipment->Destroy();
+			leftHandEquipment->Destroy();
 		}
 
-		AActor* Weapon = GetWorld()->SpawnActor(WeaponToEquip);
-		const USkeletalMeshSocket* LeftHandSocket = GetMesh()->GetSocketByName("Weapon_L");
-		if (LeftHandSocket)
+		AActor* weapon = GetWorld()->SpawnActor(weaponToEquip);
+		const USkeletalMeshSocket* leftHandSocket = GetMesh()->GetSocketByName("Weapon_L");
+		if (leftHandSocket)
 		{
-			LeftHandSocket->AttachActor(Weapon, GetMesh());
+			leftHandSocket->AttachActor(weapon, GetMesh());
 		}
 
-		LeftHandEquipment = Cast<AWeapon>(Weapon);
-		if (LeftHandEquipment)
+		leftHandEquipment = Cast<AWeapon>(weapon);
+		if (leftHandEquipment)
 		{
-			LeftHandEquipment->SetMainCharacter(this);
+			leftHandEquipment->SetMainCharacter(this);
 		}
 	}
-	else if (WeaponToEquip == nullptr)
+	else if (weaponToEquip == nullptr)
 	{
-		if (LeftHandEquipment != nullptr)
+		if (leftHandEquipment != nullptr)
 		{
-			LeftHandEquipment->Destroy();
+			leftHandEquipment->Destroy();
 		}
 	}
 }
 
 void AMainCharacter::ActivateWeapon()
 {
-	if (RightHandEquipment)
+	if (rightHandEquipment)
 	{
-		RightHandEquipment->ActivateAttackCollision();
+		rightHandEquipment->ActivateAttackCollision();
 	}
 }
 
 void AMainCharacter::DeactivateWeapon()
 {
-	if (RightHandEquipment)
+	if (rightHandEquipment)
 	{
-		RightHandEquipment->DeactivateAttackCollision();
+		rightHandEquipment->DeactivateAttackCollision();
 	}
 }

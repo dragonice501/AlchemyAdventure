@@ -17,7 +17,7 @@ void AResource::BuildResource(FName ItemName)
 			ResourceName = ResourceRow->ResourceName;
 			CombinableResources = ResourceRow->CombinableResources;
 			CombineResults = ResourceRow->CombineResults;
-			ResourceImage = ResourceRow->ResourceImage;
+			resourceImage = ResourceRow->resourceImage;
 			ResourceElement = ResourceRow->ResourceElement;
 		}
 	}

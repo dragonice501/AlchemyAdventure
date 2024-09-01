@@ -23,23 +23,12 @@ struct FResourcePropertyTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 ResourceID;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString ResourceName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FString> CombinableResources;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FString> CombineResults;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTexture2D* ResourceImage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EResourceElement ResourceElement;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 ResourceID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString ResourceName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> CombinableResources;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> CombineResults;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* resourceImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EResourceElement ResourceElement;
 };
 
 UCLASS()
@@ -49,23 +38,12 @@ class ALCHEMYADVENTURE_API AResource : public AItem
 
 public:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FString ResourceName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 ResourceID;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<FString> CombinableResources;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<FString> CombineResults;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UTexture2D* ResourceImage;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	EResourceElement ResourceElement;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) FString ResourceName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 ResourceID;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TArray<FString> CombinableResources;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TArray<FString> CombineResults;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) UTexture2D* resourceImage;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) EResourceElement ResourceElement;
 
 public:
 
