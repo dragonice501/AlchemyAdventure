@@ -3,6 +3,18 @@
 
 #include "Resource.h"
 
+void AResource::BuildResource(const FResourcePropertyTable* row)
+{
+	if (row)
+	{
+		resourceName = row->resourceName;
+		combinableResources = row->combinableResources;
+		combineResults = row->combineResults;
+		resourceImage = row->resourceImage;
+		resourceElement = row->resourceElement;
+	}
+}
+
 void AResource::BuildResource(FName ItemName)
 {
 	FString ResourceTablePath = TEXT("DataTable'/Game/Data/DT_Resources.DT_Resources'");
@@ -13,12 +25,11 @@ void AResource::BuildResource(FName ItemName)
 		ResourceRow = ResourceDataTable->FindRow<FResourcePropertyTable>(ItemName, TEXT(""));
 		if (ResourceRow)
 		{
-			ResourceID = ResourceRow->ResourceID;
-			ResourceName = ResourceRow->ResourceName;
-			CombinableResources = ResourceRow->CombinableResources;
-			CombineResults = ResourceRow->CombineResults;
+			resourceName = ResourceRow->resourceName;
+			combinableResources = ResourceRow->combinableResources;
+			combineResults = ResourceRow->combineResults;
 			resourceImage = ResourceRow->resourceImage;
-			ResourceElement = ResourceRow->ResourceElement;
+			resourceElement = ResourceRow->resourceElement;
 		}
 	}
 }
@@ -28,11 +39,11 @@ FString AResource::CheckCanCombine(AResource* OtherResource)
 	FString Result;
 	if (OtherResource)
 	{
-		for (int i = 0; i < CombinableResources.Num(); i++)
+		for (int i = 0; i < combinableResources.Num(); i++)
 		{
-			if (CombinableResources[i] == OtherResource->ResourceName)
+			if (combinableResources[i] == OtherResource->resourceName)
 			{
-				Result = CombineResults[i];
+				Result = combineResults[i];
 				return Result;
 			}
 		}

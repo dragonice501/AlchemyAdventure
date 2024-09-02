@@ -33,6 +33,24 @@ void UPlayerInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	// ...
 }
 
+void UPlayerInventoryComponent::AddToResourceInventory(const FDataTableRowHandle& itemName)
+{
+	FResourcePropertyTable* row = itemName.GetRow<FResourcePropertyTable>(itemName.RowName.ToString());
+
+	for (TPair<FR, uint8>& resource : resourceMap)
+	{
+		if (row->resourceName == resource.Key.resourceName)
+		{
+			resource.Value++;
+			return;
+		}
+	}
+
+	FR newResource;
+	newResource.BuildResource(row);
+	resourceMap.Add(newResource, 1);
+}
+
 void UPlayerInventoryComponent::AddToWeaponInventory(TSubclassOf<AWeapon> weapon)
 {
 	weaponInventory.Add(weapon);
@@ -55,7 +73,7 @@ bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex,
 			else previousResource = currentResource;
 			currentResource = resourceInventory[i];
 
-			if (currentResource->ResourceName == previousResource->ResourceName)
+			if (currentResource->resourceName == previousResource->resourceName)
 			{
 				if (Index == resourceStackIndex)
 				{
@@ -64,7 +82,7 @@ bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex,
 					{
 						if (setIngredientsOneInv.Num() > 0)
 						{
-							if (setIngredientsOneInv[0]->ResourceName != currentResource->ResourceName)
+							if (setIngredientsOneInv[0]->resourceName != currentResource->resourceName)
 							{
 								while (setIngredientsOneInv.Num() > 0)
 								{
@@ -93,7 +111,7 @@ bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex,
 					{
 						if (setIngredientsTwoInv.Num() > 0)
 						{
-							if (setIngredientsTwoInv[0]->ResourceName != currentResource->ResourceName)
+							if (setIngredientsTwoInv[0]->resourceName != currentResource->resourceName)
 							{
 								while (setIngredientsTwoInv.Num() > 0)
 								{
@@ -120,7 +138,7 @@ bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex,
 					}
 				}
 			}
-			else if (currentResource->ResourceName != previousResource->ResourceName)
+			else if (currentResource->resourceName != previousResource->resourceName)
 			{
 				Index++;
 				if (Index == resourceStackIndex)
@@ -130,7 +148,7 @@ bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex,
 					{
 						if (setIngredientsOneInv.Num() > 0)
 						{
-							if (setIngredientsOneInv[0]->ResourceName != currentResource->ResourceName)
+							if (setIngredientsOneInv[0]->resourceName != currentResource->resourceName)
 							{
 								while (setIngredientsOneInv.Num() > 0)
 								{
@@ -159,7 +177,7 @@ bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex,
 					{
 						if (setIngredientsTwoInv.Num() > 0)
 						{
-							if (setIngredientsTwoInv[0]->ResourceName != currentResource->ResourceName)
+							if (setIngredientsTwoInv[0]->resourceName != currentResource->resourceName)
 							{
 								while (setIngredientsTwoInv.Num() > 0)
 								{
@@ -231,7 +249,7 @@ void UPlayerInventoryComponent::GetResource(int32 resourceStackIndex, int32 inUs
 			else previousResource = currentResource;
 			currentResource = resourceInventory[i];
 
-			if (currentResource->ResourceName != previousResource->ResourceName)
+			if (currentResource->resourceName != previousResource->resourceName)
 			{
 				if (Index == resourceStackIndex)
 				{
@@ -253,7 +271,7 @@ void UPlayerInventoryComponent::GetResource(int32 resourceStackIndex, int32 inUs
 				}
 				Index++;
 			}
-			else if (currentResource->ResourceName == previousResource->ResourceName)
+			else if (currentResource->resourceName == previousResource->resourceName)
 			{
 				if (Index == resourceStackIndex)
 				{
@@ -264,7 +282,7 @@ void UPlayerInventoryComponent::GetResource(int32 resourceStackIndex, int32 inUs
 						hasResource = true;
 						return;
 					}
-					else if (i - 1 != inUseIngredientIndex && resourceInventory[i]->ResourceName == currentResource->ResourceName)
+					else if (i - 1 != inUseIngredientIndex && resourceInventory[i]->resourceName == currentResource->resourceName)
 					{
 						resourceImage = previousResource->resourceImage;
 						resourceInventoryIndex = i - 1;
@@ -288,9 +306,19 @@ void UPlayerInventoryComponent::GetResource(int32 resourceStackIndex, int32 inUs
 
 void UPlayerInventoryComponent::GetResourceImage(int32 resourceStackIndex, UTexture2D*& resourceImage)
 {
-	int32 Index = 0;
+	int32 index = 0;
+	for (TPair<FR, uint8>& resource : resourceMap)
+	{
+		if (index == resourceStackIndex)
+		{
+			resourceImage = resource.Key.resourceImage;
+			return;
+		}
 
-	if (resourceInventory.Num() > 0)
+		index++;
+	}
+
+	/*if (resourceInventory.Num() > 0)
 	{
 		AResource* CurrentResource = nullptr;
 		AResource* PreviousResource = nullptr;
@@ -301,18 +329,18 @@ void UPlayerInventoryComponent::GetResourceImage(int32 resourceStackIndex, UText
 			else PreviousResource = CurrentResource;
 			CurrentResource = resourceInventory[i];
 
-			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
+			if (CurrentResource->resourceName != PreviousResource->resourceName)
 			{
-				if (Index == resourceStackIndex)
+				if (index == resourceStackIndex)
 				{
 					resourceImage = PreviousResource->resourceImage;
 					return;
 				}
-				Index++;
+				index++;
 			}
-			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
+			else if (CurrentResource->resourceName == PreviousResource->resourceName)
 			{
-				if (Index == resourceStackIndex)
+				if (index == resourceStackIndex)
 				{
 					resourceImage = CurrentResource->resourceImage;
 					return;
@@ -320,18 +348,29 @@ void UPlayerInventoryComponent::GetResourceImage(int32 resourceStackIndex, UText
 			}
 		}
 
-		if (Index == resourceStackIndex)
+		if (index == resourceStackIndex)
 		{
 			resourceImage = CurrentResource->resourceImage;
 			return;
 		}
-	}
+	}*/
 }
 
 void UPlayerInventoryComponent::GetResourceCount(int32 resourceStackIndex, int32& resourceCount)
 {
-	int32 Index = 0;
-	int32 ItemCount = 0;
+	int32 index = 0;
+	for (TPair<FR, uint8>& resource : resourceMap)
+	{
+		if (index == resourceStackIndex)
+		{
+			resourceCount = resource.Value;
+			return;
+		}
+
+		index++;
+	}
+
+	/*int32 ItemCount = 0;
 
 	if (resourceInventory.Num() > 0)
 	{
@@ -344,30 +383,30 @@ void UPlayerInventoryComponent::GetResourceCount(int32 resourceStackIndex, int32
 			else PreviousResource = CurrentResource;
 			CurrentResource = resourceInventory[i];
 
-			if (CurrentResource->ResourceName != PreviousResource->ResourceName)
+			if (CurrentResource->resourceName != PreviousResource->resourceName)
 			{
-				if (Index == resourceStackIndex)
+				if (index == resourceStackIndex)
 				{
 					resourceCount = ItemCount;
 					return;
 				}
-				Index++;
+				index++;
 				ItemCount = 1;
 			}
-			else if (CurrentResource->ResourceName == PreviousResource->ResourceName)
+			else if (CurrentResource->resourceName == PreviousResource->resourceName)
 			{
 				ItemCount++;
 			}
 		}
 
-		if (Index == resourceStackIndex)
+		if (index == resourceStackIndex)
 		{
 			resourceCount = ItemCount;
 			return;
 		}
 
 		ItemCount = 0;
-	}
+	}*/
 }
 
 UTexture2D* UPlayerInventoryComponent::CheckCanCraft()

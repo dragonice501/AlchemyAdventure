@@ -248,7 +248,19 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 {
 	if (bCanPickup && !bInventoryOpen)
 	{
-		if (currentPickup->BPPickupItem)
+		if (currentPickup)
+		{
+			mInventory->AddToResourceInventory(currentPickup->itemDataTable);
+
+			currentPickup->Destroy();
+			DynamicMulticastSetImageAndCount.Broadcast();
+
+			if (OverlappingPickups.Num() == 0)
+			{
+				MainPlayerController->RemovePickupPrompt();
+			}
+		}
+		/*if (currentPickup->BPPickupItem)
 		{
 			TSubclassOf<AWeapon> PickupWeapon = currentPickup->BPPickupItem;
 			if (PickupWeapon && mInventory)
@@ -267,10 +279,12 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 				if (resource && mInventory)
 				{
 					resource->BuildResource(currentPickup->ItemName);
-					FString Name = resource->ResourceName;
-					//Resource->SetActorLabel(Name);
-					mInventory->AddToResourceInventory(resource);
-					//mInventory->SortResourceInventory();
+					FString Name = resource->resourceName;
+					//mInventory->AddToResourceInventory(resource);
+
+					UE_LOG(LogTemp, Warning, TEXT("pickup"));
+
+					mInventory->AddToResourceInventory(currentPickup->itemDataTable);
 
 					currentPickup->Destroy();
 					DynamicMulticastSetImageAndCount.Broadcast();
@@ -281,7 +295,7 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 			{
 				MainPlayerController->RemovePickupPrompt();
 			}
-		}
+		}*/
 	}
 }
 

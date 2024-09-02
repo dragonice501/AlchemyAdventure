@@ -4,11 +4,50 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Resource.h"
 #include "PlayerInventoryComponent.generated.h"
 
-class AResource;
 class AUsable;
 class AWeapon;
+
+USTRUCT(BlueprintType)
+struct FR
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString resourceName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combinableResources;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combineResults;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* resourceImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EResourceElement resourceElement;
+
+	FR() : resourceName(""), resourceImage(nullptr), resourceElement(EResourceElement::ERE_None) {}
+
+	bool operator== (const FR& other)
+	{
+		return resourceName == other.resourceName;
+	}
+	friend bool operator== (const FR& a, const FR& b)
+	{
+		return a.resourceName == b.resourceName;
+	}
+	friend uint32 GetTypeHash(const FR& other)
+	{
+		return GetTypeHash(other.resourceName);
+	}
+
+	void BuildResource(const FResourcePropertyTable* row)
+	{
+		if (row)
+		{
+			resourceName = row->resourceName;
+			combinableResources = row->combinableResources;
+			combineResults = row->combineResults;
+			resourceImage = row->resourceImage;
+			resourceElement = row->resourceElement;
+		}
+	}
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ALCHEMYADVENTURE_API UPlayerInventoryComponent : public UActorComponent
@@ -22,16 +61,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<TSubclassOf<AWeapon>> weaponInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<TSubclassOf<AUsable>> PotionMap;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> resourceMap;
+
+	// Crafting
+	UPROPERTY(VisibleAnywhere) TArray<AResource*> setIngredientsOneInv;
+	UPROPERTY(VisibleAnywhere) TArray<AResource*> setIngredientsTwoInv;
+
 	// Gear
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<int32> currentGearIndexes{ -1, -1, -1, -1 };
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> gearSlotOneInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> gearSlotTwoInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> gearSlotThreeInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> gearSlotFourInventory;
-
-	// Crafting
-	UPROPERTY(VisibleAnywhere) TArray<AResource*> setIngredientsOneInv;
-	UPROPERTY(VisibleAnywhere) TArray<AResource*> setIngredientsTwoInv;
 
 public:	
 	// Sets default values for this component's properties
@@ -47,10 +88,11 @@ public:
 
 	// Inventory
 	void AddToResourceInventory(AResource* resource) { resourceInventory.Add(resource); }
+	void AddToResourceInventory(const FDataTableRowHandle& itemName);
 	void AddToUsuablesInventory(AUsable* usable) { usablesInventory.Add(usable); }
 	void AddToWeaponInventory(TSubclassOf<AWeapon> weapon);
 
-	//void SortResourceInventory() { resourceInventory.Sort(); }
+	//void SortResourceInventory() { resourceMap.KeySort(); }
 
 	UFUNCTION(BlueprintCallable) bool RemoveAndSetIngredient(int32 resourceStackIndex, int32 resourceSelectIndex, UTexture2D*& resourceImage);
 	UFUNCTION(BlueprintCallable) void ResetCraftingIngredients(bool resetFirst, bool resetSecond);

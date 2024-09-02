@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Item.h"
+#include "GameFramework/Actor.h"
 #include "Engine/Datatable.h"
 #include "Resource.generated.h"
 
@@ -23,30 +23,29 @@ struct FResourcePropertyTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 ResourceID;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString ResourceName;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> CombinableResources;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> CombineResults;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString resourceName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combinableResources;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combineResults;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* resourceImage;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) EResourceElement ResourceElement;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EResourceElement resourceElement;
 };
 
 UCLASS()
-class ALCHEMYADVENTURE_API AResource : public AItem
+class ALCHEMYADVENTURE_API AResource : public AActor
 {
 	GENERATED_BODY()
 
 public:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) FString ResourceName;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 ResourceID;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TArray<FString> CombinableResources;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TArray<FString> CombineResults;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) FString resourceName;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TArray<FString> combinableResources;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TArray<FString> combineResults;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) UTexture2D* resourceImage;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) EResourceElement ResourceElement;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) EResourceElement resourceElement;
 
 public:
 
+	void BuildResource(const FResourcePropertyTable* row);
 	void BuildResource(FName ItemName);
 
 	FString CheckCanCombine(AResource* OtherResource);

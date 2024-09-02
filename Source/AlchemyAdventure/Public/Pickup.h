@@ -42,6 +42,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName ItemName;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FDataTableRowHandle itemDataTable;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UDataTable* resourceDataTable;
+
 public:	
 	// Sets default values for this actor's properties
 	APickup();
