@@ -141,17 +141,17 @@ public:
 	int32 DesiredGearSlot = -1;
 	int32 StatusEffectTime;
 
-	FTimerHandle AttackModifierTimer;
+	FTimerHandle attackModifierTimer;
 	bool bAttackModifier = false;
-	float AttackModifier = 1.f;
+	float attackModifier = 1.f;
 
-	FTimerHandle DefenseModifierTimer;
+	FTimerHandle defenseModifierTimer;
 	bool bDefenseModifier = false;
-	float DefenseModifier = 1.f;
+	float defenseModifier = 1.f;
 
-	FTimerHandle MobilityModifierTimer;
+	FTimerHandle mobilityModifierTimer;
 	bool bMobilityModifier = false;
-	float MobilityModifier = 1.f;
+	float mobilityModifier = 1.f;
 
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsOneInv;
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsTwoInv;

@@ -24,29 +24,13 @@ class ALCHEMYADVENTURE_API APickup : public AActor
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class USphereComponent* OverlapSphere;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UStaticMeshComponent* Mesh;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UParticleSystemComponent* IdleParticles;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EPickupType PickupType;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class AItem> BPPickupItem;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName ItemName;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FDataTableRowHandle itemDataTable;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UDataTable* resourceDataTable;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) class USphereComponent* OverlapSphere;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UStaticMeshComponent* Mesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) class UParticleSystemComponent* IdleParticles;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EPickupType PickupType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<class AItem> BPPickupItem;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FName ItemName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FDataTableRowHandle itemDataTable;
 
 public:	
 	// Sets default values for this actor's properties

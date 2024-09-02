@@ -33,35 +33,16 @@ struct FUsablePropertyTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable")
-	int32 UsableID;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString UsableName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTexture2D* UsableImage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EUsableElement UsableType;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EStatusEffect StatusEffect;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 StatusEffectTime;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float AttackModifier;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float HealAmount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float DefenseModifier;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MobilityModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableDescription;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* usableImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EUsableElement usableElement;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EStatusEffect statusEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 statusEffectTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float attackModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float healAmount;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float defenseModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float mobilityModifier;
 };
 
 UCLASS()
@@ -71,19 +52,19 @@ class ALCHEMYADVENTURE_API AUsable : public AItem
 	
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") FString StartingName;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") int32 UsableID;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") FString UsableName;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") UTexture2D* UsableImage;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") EUsableElement UsableType;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") EStatusEffect StatusEffect;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") int32 StatusEffectTime;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float AttackModifier;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float HealAmount;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float DefenseModifier;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float MobilityModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") FString startingName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") FString usableName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") UTexture2D* usableImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") EUsableElement usableType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") EStatusEffect statusEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") int32 statusEffectTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float attackModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float healAmount;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float defenseModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Usable") float mobilityModifier;
 
 public:
 
 	void BuildUsable(FName UsableName);
+	void BuildUsable(const FUsablePropertyTable* row);
 };

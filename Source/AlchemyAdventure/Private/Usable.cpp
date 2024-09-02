@@ -9,35 +9,63 @@ void AUsable::BuildUsable(FName Name)
 	UDataTable* UsableDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *UsableTablePath));
 	if (UsableDataTable)
 	{
-		FUsablePropertyTable* UsableRow = nullptr;
-		UsableRow = UsableDataTable->FindRow<FUsablePropertyTable>(Name, TEXT(""));
-		if (UsableRow)
+		FUsablePropertyTable* usableRow = nullptr;
+		usableRow = UsableDataTable->FindRow<FUsablePropertyTable>(Name, TEXT(""));
+		if (usableRow)
 		{
-			UsableID = UsableRow->UsableID;
-			UsableName = UsableRow->UsableName;
-			UsableImage = UsableRow->UsableImage;
-			StatusEffect = UsableRow->StatusEffect;
-			StatusEffectTime = UsableRow->StatusEffectTime;
+			usableName = usableRow->usableName;
+			usableImage = usableRow->usableImage;
+			statusEffect = usableRow->statusEffect;
+			statusEffectTime = usableRow->statusEffectTime;
 
-			switch (StatusEffect)
+			switch (statusEffect)
 			{
 			case EStatusEffect::ESE_None:
 				break;
 			case EStatusEffect::ESE_Attack:
-				AttackModifier = UsableRow->AttackModifier;
+				attackModifier = usableRow->attackModifier;
 				break;
 			case EStatusEffect::ESE_Heal:
-				HealAmount = UsableRow->HealAmount;
+				healAmount = usableRow->healAmount;
 				break;
 			case EStatusEffect::ESE_Defense:
-				DefenseModifier = UsableRow->DefenseModifier;
+				defenseModifier = usableRow->defenseModifier;
 				break;
 			case EStatusEffect::ESE_Mobility:
-				MobilityModifier = UsableRow->MobilityModifier;
+				mobilityModifier = usableRow->mobilityModifier;
 				break;
 			default:
 				break;
 			}
+		}
+	}
+}
+
+void AUsable::BuildUsable(const FUsablePropertyTable* row)
+{
+	if (row)
+	{
+		usableName = row->usableName;
+		usableImage = row->usableImage;
+		statusEffect = row->statusEffect;
+		statusEffectTime = row->statusEffectTime;
+
+		switch (statusEffect)
+		{
+		case EStatusEffect::ESE_None:
+			break;
+		case EStatusEffect::ESE_Attack:
+			attackModifier = row->attackModifier;
+			break;
+		case EStatusEffect::ESE_Heal:
+			healAmount = row->healAmount;
+			break;
+		case EStatusEffect::ESE_Defense:
+			defenseModifier = row->defenseModifier;
+			break;
+		case EStatusEffect::ESE_Mobility:
+			mobilityModifier = row->mobilityModifier;
+			break;
 		}
 	}
 }

@@ -49,6 +49,21 @@ void UPlayerInventoryComponent::AddToResourceInventory(const FDataTableRowHandle
 	FR newResource;
 	newResource.BuildResource(row);
 	resourceMap.Add(newResource, 1);
+	UE_LOG(LogTemp, Warning, TEXT("New"));
+}
+
+void UPlayerInventoryComponent::AddToResourceInventory(const FR& resource, uint8 count)
+{
+	for (TPair<FR, uint8>& r : resourceMap)
+	{
+		if (r.Key.resourceName == resource.resourceName)
+		{
+			r.Value += count;
+			return;
+		}
+	}
+
+	resourceMap.Add(resource, count);
 }
 
 void UPlayerInventoryComponent::AddToWeaponInventory(TSubclassOf<AWeapon> weapon)
@@ -56,12 +71,101 @@ void UPlayerInventoryComponent::AddToWeaponInventory(TSubclassOf<AWeapon> weapon
 	weaponInventory.Add(weapon);
 }
 
-bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex, int32 resourceSelectIndex, UTexture2D*& resourceImage)
+void UPlayerInventoryComponent::RemoveResourceFromInventory(const FR& resource, uint8 count)
 {
-	int32 Index = 0;
+	for (TPair<FR, uint8>& r : resourceMap)
+	{
+		if (r.Key.resourceName == resource.resourceName)
+		{
+			r.Value -= count;
+			if (r.Value <= 0)
+			{
+				resourceMap.Remove(r.Key);
+			}
+			return;
+		}
+	}
+}
+
+bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex, int32 resourceSelectIndex, bool firstIngredient, UTexture2D*& resourceImage)
+{
 	int32 resourceIndex = 0;
 
-	if (resourceInventory.Num() > 0)
+	int32 index = 0;
+	for (TPair<FR, uint8>& resource : resourceMap)
+	{
+		// Desired ingredient found
+		if (index == resourceStackIndex)
+		{
+			resourceImage = resource.Key.resourceImage;
+
+			// first ingredient selected
+			if (firstIngredient)
+			{
+				// no ingredient placed yet
+				if (firstIngredientMap.IsEmpty())
+				{
+					firstIngredientMap.Add(resource.Key, 1);
+					RemoveResourceFromInventory(resource.Key, 1);
+				}
+				// ingredient already in place
+				else if (firstIngredientMap.begin())
+				{
+					// if same ingredient increment num
+					if (firstIngredientMap.begin()->Key == resource.Key)
+					{
+						firstIngredientMap.begin()->Value++;
+						RemoveResourceFromInventory(resource.Key, 1);
+					}
+					// if different ingredient return to inventory
+					else
+					{
+						AddToResourceInventory(firstIngredientMap.begin().Key(), firstIngredientMap.begin().Value());
+
+						firstIngredientMap.begin().Key() = resource.Key;
+						firstIngredientMap.begin().Value() = 1;
+
+						RemoveResourceFromInventory(resource.Key, 1);
+					}
+				}
+			}
+			else
+			{
+				// no ingredient placed yet
+				if (secondIngredientMap.IsEmpty())
+				{
+					secondIngredientMap.Add(resource.Key, 1);
+					RemoveResourceFromInventory(resource.Key, 1);
+				}
+				// ingredient already in place
+				else if (secondIngredientMap.begin())
+				{
+					// if same ingredient increment num
+					if (secondIngredientMap.begin()->Key == resource.Key)
+					{
+						secondIngredientMap.begin()->Value++;
+						RemoveResourceFromInventory(resource.Key, 1);
+					}
+					// if different ingredient return to inventory
+					else
+					{
+						AddToResourceInventory(secondIngredientMap.begin().Key(), secondIngredientMap.begin().Value());
+
+						secondIngredientMap.begin().Key() = resource.Key;
+						secondIngredientMap.begin().Value() = 1;
+
+						RemoveResourceFromInventory(resource.Key, 1);
+					}
+				}
+			}
+
+			return true;
+		}
+
+		index++;
+	}
+
+	/*if (resourceInventory.Num() > 0)
 	{
 		AResource* currentResource = nullptr;
 		AResource* previousResource = nullptr;
@@ -205,32 +309,26 @@ bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex,
 				}
 			}
 		}
-	}
+	}*/
 
 	return false;
 }
 
 void UPlayerInventoryComponent::ResetCraftingIngredients(bool resetFirst, bool resetSecond)
 {
-	if (setIngredientsOneInv.Num() > 0 && resetFirst)
+	if (firstIngredientMap.begin() && resetFirst)
 	{
-		while (setIngredientsOneInv.Num() > 0)
-		{
-			resourceInventory.Add(setIngredientsOneInv[0]);
-			setIngredientsOneInv.RemoveAt(0);
-		}
+		AddToResourceInventory(firstIngredientMap.begin().Key(), firstIngredientMap.begin().Value());
+
+		firstIngredientMap.Empty();
 	}
 
-	if (setIngredientsTwoInv.Num() > 0 && resetSecond)
+	if (secondIngredientMap.begin() && resetSecond)
 	{
-		while (setIngredientsTwoInv.Num() > 0)
-		{
-			resourceInventory.Add(setIngredientsTwoInv[0]);
-			setIngredientsTwoInv.RemoveAt(0);
-		}
-	}
+		AddToResourceInventory(secondIngredientMap.begin().Key(), secondIngredientMap.begin().Value());
 
-	//SortResourceInventory();
+		secondIngredientMap.Empty();
+	}
 }
 
 void UPlayerInventoryComponent::GetResource(int32 resourceStackIndex, int32 inUseIngredientIndex, int32& resourceInventoryIndex, UTexture2D*& resourceImage, bool& hasResource)
@@ -411,9 +509,34 @@ void UPlayerInventoryComponent::GetResourceCount(int32 resourceStackIndex, int32
 
 UTexture2D* UPlayerInventoryComponent::CheckCanCraft()
 {
-	UTexture2D* Image = nullptr;
+	UTexture2D* image = nullptr;
 
-	if (setIngredientsOneInv.Num() > 0)
+	uint8 index = 0;
+	if (firstIngredientMap.begin() && secondIngredientMap.begin())
+	{
+		for (FString combinable : firstIngredientMap.begin().Key().combinableResources)
+		{
+			if (combinable == secondIngredientMap.begin().Key().resourceName)
+			{
+				if(!usableDataTable.IsNull())
+				{
+					UDataTable* dataTable = Cast<UDataTable>(usableDataTable.DataTable);
+					if(dataTable)
+					{
+						FUsablePropertyTable* row = dataTable->FindRow<FUsablePropertyTable>(FName(firstIngredientMap.begin().Key().combineResults[index]), TEXT(""));
+						if (row)
+						{
+							image = row->usableImage;
+						}
+					}
+				}
+			}
+
+			index++;
+		}
+	}
+
+	/*if (setIngredientsOneInv.Num() > 0)
 	{
 		if (setIngredientsTwoInv.Num() > 0)
 		{
@@ -424,22 +547,63 @@ UTexture2D* UPlayerInventoryComponent::CheckCanCraft()
 				if (Usable)
 				{
 					Usable->BuildUsable(Craftable);
-					if (Usable->UsableImage)
+					if (Usable->usableImage)
 					{
-						Image = Usable->UsableImage;
+						Image = Usable->usableImage;
 						return Image;
 					}
 				}
 			}
 		}
-	}
+	}*/
 
-	return Image;
+	return image;
 }
 
 bool UPlayerInventoryComponent::AddUsable()
 {
-	if (setIngredientsOneInv.Num() > 0)
+	uint8 index = 0;
+	if (firstIngredientMap.begin() && secondIngredientMap.begin())
+	{
+		for (FString combinable : firstIngredientMap.begin().Key().combinableResources)
+		{
+			if (combinable == secondIngredientMap.begin().Key().resourceName)
+			{
+				if (!usableDataTable.IsNull())
+				{
+					UDataTable* dataTable = Cast<UDataTable>(usableDataTable.DataTable);
+					if (dataTable)
+					{
+						FUsablePropertyTable* row = dataTable->FindRow<FUsablePropertyTable>(FName(firstIngredientMap.begin().Key().combineResults[index]), TEXT(""));
+						if (row)
+						{
+							if (--firstIngredientMap.begin().Value() == 0) firstIngredientMap.Empty();
+							if (--secondIngredientMap.begin().Value() == 0) secondIngredientMap.Empty();
+
+							for (TPair<FU, uint8>& u : usableMap)
+							{
+								if (u.Key.usableName == row->usableName)
+								{
+									u.Value += 1;
+									return true;
+								}
+							}
+
+							FU newUsable;
+							newUsable.BuildUsable(row);
+							usableMap.Add(newUsable, 1);
+
+							return true;
+						}
+					}
+				}
+			}
+
+			index++;
+		}
+	}
+
+	/*if (setIngredientsOneInv.Num() > 0)
 	{
 		if (setIngredientsTwoInv.Num() > 0)
 		{
@@ -450,9 +614,9 @@ bool UPlayerInventoryComponent::AddUsable()
 				if (Usable)
 				{
 					Usable->BuildUsable(Craftable);
-					AUsable* UsableToAdd = Cast<AUsable>(PotionMap[Usable->UsableID]->GetDefaultObject());
-					FString Name = UsableToAdd->UsableName;
-					usablesInventory.Add(UsableToAdd);
+					//AUsable* UsableToAdd = Cast<AUsable>(PotionMap[Usable->usableID]->GetDefaultObject());
+					//FString Name = UsableToAdd->usableName;
+					//usablesInventory.Add(UsableToAdd);
 
 					setIngredientsOneInv.RemoveAt(0);
 					setIngredientsTwoInv.RemoveAt(0);
@@ -461,14 +625,16 @@ bool UPlayerInventoryComponent::AddUsable()
 				}
 			}
 		}
-	}
+	}*/
 
 	return false;
 }
 
 bool UPlayerInventoryComponent::CheckCanCraftMore()
 {
-	if (setIngredientsOneInv.Num() > 0)
+	if (firstIngredientMap.begin() && secondIngredientMap.begin()) return true;
+
+	/*if (setIngredientsOneInv.Num() > 0)
 	{
 		if (setIngredientsTwoInv.Num() > 0)
 		{
@@ -478,21 +644,21 @@ bool UPlayerInventoryComponent::CheckCanCraftMore()
 				return true;
 			}
 		}
-	}
+	}*/
 
 	return false;
 }
 
 int32 UPlayerInventoryComponent::GetIngredientsCount(bool first, bool second)
 {
-	if (first)
+	if (first && firstIngredientMap.begin())
 	{
-		return setIngredientsOneInv.Num();
+		return firstIngredientMap.begin().Value();
 	}
 
-	if (second)
+	if (second && secondIngredientMap.begin())
 	{
-		return setIngredientsTwoInv.Num();
+		return secondIngredientMap.begin().Value();
 	}
 
 	return 0;
@@ -563,7 +729,7 @@ UTexture2D* UPlayerInventoryComponent::GetGearImage(int32 index, int32& itemCoun
 			else previousVisible = currentUsable;
 			currentUsable = usablesInventory[i];
 
-			if (currentUsable->UsableName != previousVisible->UsableName)
+			if (currentUsable->usableName != previousVisible->usableName)
 			{
 				if (itemIndex == index)
 				{
@@ -572,14 +738,14 @@ UTexture2D* UPlayerInventoryComponent::GetGearImage(int32 index, int32& itemCoun
 				itemIndex++;
 				itemCount = 1;
 			}
-			else if (currentUsable->UsableName == previousVisible->UsableName)
+			else if (currentUsable->usableName == previousVisible->usableName)
 			{
 				itemCount++;
 			}
 
 			if (itemIndex == index)
 			{
-				image = currentUsable->UsableImage;
+				image = currentUsable->usableImage;
 			}
 			else
 			{
@@ -634,14 +800,14 @@ void UPlayerInventoryComponent::GetGearStack(int32 stackIndex, int32 slotIndex)
 			else previousUsable = currentUsable;
 			currentUsable = usablesInventory[i];
 
-			if (currentUsable->UsableName == previousUsable->UsableName)
+			if (currentUsable->usableName == previousUsable->usableName)
 			{
 				if (Index == stackIndex)
 				{
 					if (i == 0) StartIndex = i;
 				}
 			}
-			if (currentUsable->UsableName != previousUsable->UsableName)
+			if (currentUsable->usableName != previousUsable->usableName)
 			{
 				Index++;
 				if (Index == stackIndex)
@@ -657,7 +823,7 @@ void UPlayerInventoryComponent::GetGearStack(int32 stackIndex, int32 slotIndex)
 			else previousUsable = currentUsable;
 			currentUsable = usablesInventory[i];
 
-			if (currentUsable->UsableName == previousUsable->UsableName)
+			if (currentUsable->usableName == previousUsable->usableName)
 			{
 				AddToGearSlot(usablesInventory[StartIndex], slotIndex);
 				usablesInventory.RemoveAt(StartIndex);
@@ -770,7 +936,7 @@ void UPlayerInventoryComponent::GetGearSlotImageAndCount(int32 slotIndex, UTextu
 	case 0:
 		if (gearSlotOneInventory.Num() > 0)
 		{
-			outImage = gearSlotOneInventory[0]->UsableImage;
+			outImage = gearSlotOneInventory[0]->usableImage;
 			count = gearSlotOneInventory.Num();
 			hasGear = true;
 		}
@@ -782,7 +948,7 @@ void UPlayerInventoryComponent::GetGearSlotImageAndCount(int32 slotIndex, UTextu
 	case 1:
 		if (gearSlotTwoInventory.Num() > 0)
 		{
-			outImage = gearSlotTwoInventory[0]->UsableImage;
+			outImage = gearSlotTwoInventory[0]->usableImage;
 			count = gearSlotTwoInventory.Num();
 			hasGear = true;
 		}
@@ -794,7 +960,7 @@ void UPlayerInventoryComponent::GetGearSlotImageAndCount(int32 slotIndex, UTextu
 	case 2:
 		if (gearSlotThreeInventory.Num() > 0)
 		{
-			outImage = gearSlotThreeInventory[0]->UsableImage;
+			outImage = gearSlotThreeInventory[0]->usableImage;
 			count = gearSlotThreeInventory.Num();
 			hasGear = true;
 		}
@@ -806,7 +972,7 @@ void UPlayerInventoryComponent::GetGearSlotImageAndCount(int32 slotIndex, UTextu
 	case 3:
 		if (gearSlotFourInventory.Num() > 0)
 		{
-			outImage = gearSlotFourInventory[0]->UsableImage;
+			outImage = gearSlotFourInventory[0]->usableImage;
 			count = gearSlotFourInventory.Num();
 			hasGear = true;
 		}
@@ -835,15 +1001,15 @@ void UPlayerInventoryComponent::GetGearInventoryStackImageAndCount(int32 stackIn
 			else previousUsable = currentUsable;
 			currentUsable = usablesInventory[i];
 
-			if (currentUsable->UsableName == previousUsable->UsableName)
+			if (currentUsable->usableName == previousUsable->usableName)
 			{
 				count++;
 			}
-			else if (currentUsable->UsableName != previousUsable->UsableName)
+			else if (currentUsable->usableName != previousUsable->usableName)
 			{
 				if (Index == stackIndex)
 				{
-					outImage = previousUsable->UsableImage;
+					outImage = previousUsable->usableImage;
 					hasGear = true;
 					return;
 				}
@@ -854,7 +1020,7 @@ void UPlayerInventoryComponent::GetGearInventoryStackImageAndCount(int32 stackIn
 
 		if (Index == stackIndex)
 		{
-			outImage = currentUsable->UsableImage;
+			outImage = currentUsable->usableImage;
 			hasGear = true;
 			return;
 		}
@@ -868,7 +1034,7 @@ void UPlayerInventoryComponent::AddToGearSlot(AUsable* usableToAdd, int32 slotIn
 	case 0:
 		if (gearSlotOneInventory.Num() > 0)
 		{
-			if (gearSlotOneInventory[0]->UsableName != usableToAdd->UsableName)
+			if (gearSlotOneInventory[0]->usableName != usableToAdd->usableName)
 			{
 				while (gearSlotOneInventory.Num() > 0)
 				{
@@ -882,7 +1048,7 @@ void UPlayerInventoryComponent::AddToGearSlot(AUsable* usableToAdd, int32 slotIn
 	case 1:
 		if (gearSlotTwoInventory.Num() > 0)
 		{
-			if (gearSlotTwoInventory[0]->UsableName != usableToAdd->UsableName)
+			if (gearSlotTwoInventory[0]->usableName != usableToAdd->usableName)
 			{
 				while (gearSlotTwoInventory.Num() > 0)
 				{
@@ -896,7 +1062,7 @@ void UPlayerInventoryComponent::AddToGearSlot(AUsable* usableToAdd, int32 slotIn
 	case 2:
 		if (gearSlotThreeInventory.Num() > 0)
 		{
-			if (gearSlotThreeInventory[0]->UsableName != usableToAdd->UsableName)
+			if (gearSlotThreeInventory[0]->usableName != usableToAdd->usableName)
 			{
 				while (gearSlotThreeInventory.Num() > 0)
 				{
@@ -910,7 +1076,7 @@ void UPlayerInventoryComponent::AddToGearSlot(AUsable* usableToAdd, int32 slotIn
 	case 3:
 		if (gearSlotFourInventory.Num() > 0)
 		{
-			if (gearSlotFourInventory[0]->UsableName != usableToAdd->UsableName)
+			if (gearSlotFourInventory[0]->usableName != usableToAdd->usableName)
 			{
 				while (gearSlotFourInventory.Num() > 0)
 				{
@@ -923,100 +1089,3 @@ void UPlayerInventoryComponent::AddToGearSlot(AUsable* usableToAdd, int32 slotIn
 		break;
 	}
 }
-
-//void UPlayerInventoryComponent::QuickSortUsables(TArray<AUsable*> inventory, int32 low, int32 high)
-//{
-//	if (low < high)
-//	{
-//		int32 pi = Partition(inventory, low, high);
-//
-//		QuickSortUsables(inventory, low, pi - 1);
-//		QuickSortUsables(inventory, pi + 1, high);
-//	}
-//}
-//
-//int32 UPlayerInventoryComponent::Partition(TArray<AUsable*> inventory, int32 low, int32 high)
-//{
-//	AUsable* pivot = inventory[high];
-//
-//	int32 i = low - 1;
-//
-//	for (int32 j = low; j <= high - 1; j++)
-//	{
-//		if (inventory[j]->UsableID < pivot->UsableID)
-//		{
-//			i++;
-//			Swap(i, j);
-//		}
-//	}
-//
-//	Swap(i + 1, high);
-//	return i + 1;
-//}
-//
-//void UPlayerInventoryComponent::Swap(int32 i, int32 j)
-//{
-//	AUsable* temp = usablesInventory[i];
-//	usablesInventory[i] = usablesInventory[j];
-//	usablesInventory[j] = temp;
-//}
-//
-//void UPlayerInventoryComponent::DutchQuickSort(TArray<AUsable*> inventory, int left, int right)
-//{
-//	if (right <= left) return;
-//
-//	int i = 0, j = 0;
-//
-//	DutchPartition(inventory, left, right, i, j);
-//
-//	DutchQuickSort(inventory, left, j);
-//	DutchQuickSort(inventory, i, right);
-//}
-//
-//void UPlayerInventoryComponent::DutchPartition(TArray<AUsable*> Arr, int left, int right, int i, int j)
-//{
-//	i = left - 1;
-//	j = right;
-//	int p = left - 1, q = right;
-//	int v = Arr[right]->UsableID;
-//
-//	while (true)
-//	{
-//		while (Arr[i++]->UsableID < v);
-//
-//		while (v < Arr[j--]->UsableID)
-//		{
-//			if (j == left) break;
-//		}
-//
-//		if (i >= j) break;
-//
-//		Swap(i, j);
-//
-//		if (Arr[i]->UsableID == v)
-//		{
-//			p++;
-//			Swap(p, i);
-//		}
-//
-//		if (Arr[j]->UsableID == v)
-//		{
-//			q--;
-//			Swap(j, q);
-//		}
-//	}
-//
-//	Swap(i, right);
-//
-//	j = i - 1;
-//	for (int k = left; k < p; k++, j--)
-//	{
-//		Swap(k, j);
-//	}
-//
-//	i = i + 1;
-//	for (int k = right - 1; k > q; k--, i++)
-//	{
-//		Swap(i, k);
-//	}
-//}

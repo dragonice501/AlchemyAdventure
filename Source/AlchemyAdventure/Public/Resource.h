@@ -24,6 +24,7 @@ struct FResourcePropertyTable : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString resourceName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString resourceDescription;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combinableResources;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combineResults;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* resourceImage;
@@ -38,6 +39,7 @@ class ALCHEMYADVENTURE_API AResource : public AActor
 public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) FString resourceName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString resourceDescription;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TArray<FString> combinableResources;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TArray<FString> combineResults;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) UTexture2D* resourceImage;

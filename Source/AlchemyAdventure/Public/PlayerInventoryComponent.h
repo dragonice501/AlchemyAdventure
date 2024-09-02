@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Resource.h"
+#include "Usable.h"
 #include "PlayerInventoryComponent.generated.h"
 
-class AUsable;
 class AWeapon;
 
 USTRUCT(BlueprintType)
@@ -16,6 +16,7 @@ struct FR
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString resourceName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString resourceDescription;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combinableResources;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combineResults;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* resourceImage;
@@ -41,10 +42,75 @@ struct FR
 		if (row)
 		{
 			resourceName = row->resourceName;
+			resourceDescription = row->resourceDescription;
 			combinableResources = row->combinableResources;
 			combineResults = row->combineResults;
 			resourceImage = row->resourceImage;
 			resourceElement = row->resourceElement;
+		}
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FU
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableDescription;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* usableImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EUsableElement usableElement;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EStatusEffect statusEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 statusEffectTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float attackModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float healAmount;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float defenseModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float mobilityModifier;
+
+	FU() : usableName(""), usableImage(nullptr), usableElement(EUsableElement::ERE_None) {}
+
+	bool operator== (const FU& other)
+	{
+		return usableName == other.usableName;
+	}
+	friend bool operator== (const FU& a, const FU& b)
+	{
+		return a.usableName == b.usableName;
+	}
+	friend uint32 GetTypeHash(const FU& other)
+	{
+		return GetTypeHash(other.usableName);
+	}
+
+	void BuildUsable(const FUsablePropertyTable* row)
+	{
+		if (row)
+		{
+			usableName = row->usableName;
+			usableDescription = row->usableDescription;
+			usableImage = row->usableImage;
+			statusEffect = row->statusEffect;
+			statusEffectTime = row->statusEffectTime;
+
+			switch (statusEffect)
+			{
+			case EStatusEffect::ESE_None:
+				break;
+			case EStatusEffect::ESE_Attack:
+				attackModifier = row->attackModifier;
+				break;
+			case EStatusEffect::ESE_Heal:
+				healAmount = row->healAmount;
+				break;
+			case EStatusEffect::ESE_Defense:
+				defenseModifier = row->defenseModifier;
+				break;
+			case EStatusEffect::ESE_Mobility:
+				mobilityModifier = row->mobilityModifier;
+				break;
+			default:
+				break;
+			}
 		}
 	}
 };
@@ -62,10 +128,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<TSubclassOf<AUsable>> PotionMap;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> resourceMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> firstIngredientMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> secondIngredientMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FU, uint8> usableMap;
 
 	// Crafting
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> setIngredientsOneInv;
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> setIngredientsTwoInv;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FDataTableRowHandle usableDataTable;
 
 	// Gear
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<int32> currentGearIndexes{ -1, -1, -1, -1 };
@@ -89,12 +161,15 @@ public:
 	// Inventory
 	void AddToResourceInventory(AResource* resource) { resourceInventory.Add(resource); }
 	void AddToResourceInventory(const FDataTableRowHandle& itemName);
+	void AddToResourceInventory(const FR& resource, uint8 count);
 	void AddToUsuablesInventory(AUsable* usable) { usablesInventory.Add(usable); }
 	void AddToWeaponInventory(TSubclassOf<AWeapon> weapon);
 
+	void RemoveResourceFromInventory(const FR& resource, uint8 count);
+
 	//void SortResourceInventory() { resourceMap.KeySort(); }
 
-	UFUNCTION(BlueprintCallable) bool RemoveAndSetIngredient(int32 resourceStackIndex, int32 resourceSelectIndex, UTexture2D*& resourceImage);
+	UFUNCTION(BlueprintCallable) bool RemoveAndSetIngredient(int32 resourceStackIndex, int32 resourceSelectIndex, bool firstIngredient, UTexture2D*& resourceImage);
 	UFUNCTION(BlueprintCallable) void ResetCraftingIngredients(bool resetFirst, bool resetSecond);
 
 	UFUNCTION(BlueprintCallable) void GetResource(int32 resourceStackIndex, int32 inUseIngredientIndex, int32& resourceInventoryIndex, UTexture2D*& resourceImage, bool& hasResource);

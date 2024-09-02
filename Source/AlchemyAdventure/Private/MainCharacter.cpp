@@ -63,7 +63,7 @@ void AMainCharacter::BeginPlay()
 			if (usable && mInventory)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("UsablePointer"));
-				usable->BuildUsable(*usable->StartingName);
+				usable->BuildUsable(*usable->startingName);
 				mInventory->AddToUsuablesInventory(usable);
 			}
 		}
@@ -91,7 +91,7 @@ void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	GetCharacterMovement()->MaxWalkSpeed = bMobilityModifier ? MaxWalkSpeed * MobilityModifier : MaxWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = bMobilityModifier ? MaxWalkSpeed * mobilityModifier : MaxWalkSpeed;
 
 	if (bLockedOn && TargetEnemy)
 	{
@@ -253,7 +253,7 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 			mInventory->AddToResourceInventory(currentPickup->itemDataTable);
 
 			currentPickup->Destroy();
-			DynamicMulticastSetImageAndCount.Broadcast();
+			//DynamicMulticastSetImageAndCount.Broadcast();
 
 			if (OverlappingPickups.Num() == 0)
 			{
@@ -812,7 +812,7 @@ void AMainCharacter::GetGear(int32 Index)
 
 	if (DesiredGearToUse)
 	{
-		switch (DesiredGearToUse->StatusEffect)
+		switch (DesiredGearToUse->statusEffect)
 		{
 		case EStatusEffect::ESE_None:
 			return;
@@ -854,26 +854,26 @@ void AMainCharacter::UseDesiredGear()
 			break;
 		}
 
-		switch (DesiredGearToUse->StatusEffect)
+		switch (DesiredGearToUse->statusEffect)
 		{
 		case EStatusEffect::ESE_None:
 			return;
 		case EStatusEffect::ESE_Attack:
-			SetAttackModifier(DesiredGearToUse->StatusEffectTime, DesiredGearToUse->AttackModifier);
+			SetAttackModifier(DesiredGearToUse->statusEffectTime, DesiredGearToUse->attackModifier);
 			DynamicMulticastSetImageAndCount.Broadcast();
 			DynamicMulticastSetAttackTimer.Broadcast(true);
 			return;
 		case EStatusEffect::ESE_Heal:
-			Heal(DesiredGearToUse->HealAmount);
+			Heal(DesiredGearToUse->healAmount);
 			DynamicMulticastSetImageAndCount.Broadcast();
 			return;
 		case EStatusEffect::ESE_Defense:
-			SetDefenseModifier(DesiredGearToUse->StatusEffectTime, DesiredGearToUse->DefenseModifier);
+			SetDefenseModifier(DesiredGearToUse->statusEffectTime, DesiredGearToUse->defenseModifier);
 			DynamicMulticastSetImageAndCount.Broadcast();
 			DynamicMulticastSetDefenseTimer.Broadcast(true);
 			return;
 		case EStatusEffect::ESE_Mobility:
-			SetMobilityModifier(DesiredGearToUse->StatusEffectTime, DesiredGearToUse->MobilityModifier);
+			SetMobilityModifier(DesiredGearToUse->statusEffectTime, DesiredGearToUse->mobilityModifier);
 			DynamicMulticastSetImageAndCount.Broadcast();
 			DynamicMulticastSetMobilityTimer.Broadcast(true);
 			break;
@@ -889,14 +889,14 @@ void AMainCharacter::UseDesiredGear()
 void AMainCharacter::SetAttackModifier(int32 Time, float Modifier)
 {
 	bAttackModifier = true;
-	AttackModifier = Modifier;
-	GetWorldTimerManager().SetTimer(AttackModifierTimer, this, &AMainCharacter::ResetAttackModifier, Time);
+	attackModifier = Modifier;
+	GetWorldTimerManager().SetTimer(attackModifierTimer, this, &AMainCharacter::ResetAttackModifier, Time);
 }
 
 void AMainCharacter::ResetAttackModifier()
 {
 	bAttackModifier = false;
-	AttackModifier = 1;
+	attackModifier = 1;
 	DynamicMulticastSetAttackTimer.Broadcast(false);
 }
 
@@ -904,7 +904,7 @@ float AMainCharacter::GetAttackTimeRemaining()
 {
 	if (bAttackModifier)
 	{
-		return GetWorldTimerManager().GetTimerRemaining(AttackModifierTimer);
+		return GetWorldTimerManager().GetTimerRemaining(attackModifierTimer);
 	}
 
 	return 0;
@@ -913,14 +913,14 @@ float AMainCharacter::GetAttackTimeRemaining()
 void AMainCharacter::SetDefenseModifier(int32 Time, float Modifier)
 {
 	bDefenseModifier = true;
-	DefenseModifier = Modifier;
-	GetWorldTimerManager().SetTimer(DefenseModifierTimer, this, &AMainCharacter::ResetAttackModifier, Time);
+	defenseModifier = Modifier;
+	GetWorldTimerManager().SetTimer(defenseModifierTimer, this, &AMainCharacter::ResetAttackModifier, Time);
 }
 
 void AMainCharacter::ResetDefenseModifier()
 {
 	bDefenseModifier = false;
-	DefenseModifier = 1;
+	defenseModifier = 1;
 	DynamicMulticastSetMobilityTimer.Broadcast(false);
 }
 
@@ -928,7 +928,7 @@ float AMainCharacter::GetDefenseTimeRemaining()
 {
 	if (bDefenseModifier)
 	{
-		return GetWorldTimerManager().GetTimerRemaining(DefenseModifierTimer);
+		return GetWorldTimerManager().GetTimerRemaining(defenseModifierTimer);
 	}
 
 	return 0;
@@ -937,16 +937,16 @@ float AMainCharacter::GetDefenseTimeRemaining()
 void AMainCharacter::SetMobilityModifier(int32 Time, float Modifier)
 {
 	bMobilityModifier = true;
-	MobilityModifier = Modifier;
-	GetWorldTimerManager().SetTimer(MobilityModifierTimer, this, &AMainCharacter::ResetMobilityModifier, Time);
+	mobilityModifier = Modifier;
+	GetWorldTimerManager().SetTimer(mobilityModifierTimer, this, &AMainCharacter::ResetMobilityModifier, Time);
 	CustomTimeDilation = Modifier;
 }
 
 void AMainCharacter::ResetMobilityModifier()
 {
 	bMobilityModifier = false;
-	MobilityModifier = 1;
-	CustomTimeDilation = MobilityModifier;
+	mobilityModifier = 1;
+	CustomTimeDilation = mobilityModifier;
 	DynamicMulticastSetMobilityTimer.Broadcast(false);
 }
 
@@ -954,7 +954,7 @@ float AMainCharacter::GetMobilityTimeRemaining()
 {
 	if (bMobilityModifier)
 	{
-		return GetWorldTimerManager().GetTimerRemaining(MobilityModifierTimer);
+		return GetWorldTimerManager().GetTimerRemaining(mobilityModifierTimer);
 	}
 
 	return 0;

@@ -77,7 +77,7 @@ void AWeapon::OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 					int32 FinalDamage = Damage;
 					if (OwningCharacter->bAttackModifier)
 					{
-						FinalDamage *= OwningCharacter->AttackModifier;
+						FinalDamage *= OwningCharacter->attackModifier;
 					}
 
 					UGameplayStatics::ApplyDamage(Enemy, FinalDamage, Owner->GetController(), this, DamageType);
@@ -111,7 +111,7 @@ void AWeapon::OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 					int32 FinalDamage = Damage;
 					if (MainCharacter->bDefenseModifier)
 					{
-						FinalDamage *= MainCharacter->DefenseModifier;
+						FinalDamage *= MainCharacter->defenseModifier;
 					}
 					UGameplayStatics::ApplyDamage(MainCharacter, FinalDamage, Owner->GetController(), this, DamageType);
 					MainCharacter->ResetDodge();
