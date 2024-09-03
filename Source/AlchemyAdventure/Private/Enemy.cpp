@@ -207,7 +207,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	AWeapon* Weapon = Cast<AWeapon>(DamageCauser);
 	if (Weapon)
 	{
-		DepletePoise(Weapon->PoiseCost);
+		DepletePoise(Weapon->poiseCost);
 	}
 
 	return DamageAmount;

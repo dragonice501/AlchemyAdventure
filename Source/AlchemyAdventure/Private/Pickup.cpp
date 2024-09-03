@@ -71,10 +71,10 @@ FString APickup::GetPickupPrompt()
 	FString Prompt = "";
 	switch (PickupType)
 	{
-	case EPickupType::EPT_Resource:
+	case EPickupType::EPT_RESOURCE:
 		Prompt = "Gather Resource";
 		break;
-	case EPickupType::EPT_Item:
+	case EPickupType::EPT_WEAPON:
 		Prompt = "Pickup Item";
 		break;
 	default:

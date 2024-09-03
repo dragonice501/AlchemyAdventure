@@ -6,9 +6,22 @@
 #include "Components/ActorComponent.h"
 #include "Resource.h"
 #include "Usable.h"
+#include "Weapon.h"
 #include "PlayerInventoryComponent.generated.h"
 
-class AWeapon;
+USTRUCT(BlueprintType)
+struct FWeaponPropertyTable : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AWeapon> weaponBlueprint;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* weaponImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EWeaponType weaponType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float damage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float staminaCost;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float staminaRechargeDelay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float poiseCost;
+};
 
 USTRUCT(BlueprintType)
 struct FR
@@ -115,6 +128,57 @@ struct FU
 	}
 };
 
+USTRUCT(BlueprintType)
+struct FW
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AWeapon> weaponBlueprint;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString weaponName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* weaponImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EWeaponType weaponType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float damage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float staminaCost;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float staminaRechargeDelay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float poiseCost;
+
+	FW() : weaponName(""), weaponType(EWeaponType::EWT_Sword) {}
+
+	/*bool operator> (const FW& other)
+	{
+		return weaponType > other.weaponType;
+	}*/
+	bool operator== (const FW& other)
+	{
+		return weaponName == other.weaponName;
+	}
+	friend bool operator== (const FW& a, const FW& b)
+	{
+		return a.weaponName == b.weaponName;
+	}
+	friend uint32 GetTypeHash(const FW& other)
+	{
+		return GetTypeHash(other.weaponName);
+	}
+
+	void BuildWeapon(const FWeaponPropertyTable* row, const FName& name)
+	{
+		if (row)
+		{
+			weaponBlueprint = row->weaponBlueprint;
+			weaponName = name.ToString();
+			weaponImage = row->weaponImage;
+			weaponType = row->weaponType;
+			damage = row->damage;
+			staminaCost = row->staminaCost;
+			staminaRechargeDelay = row->staminaRechargeDelay;
+			poiseCost = row->poiseCost;
+
+			if (weaponImage) UE_LOG(LogTemp, Warning, TEXT("Image"));
+		}
+	}
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ALCHEMYADVENTURE_API UPlayerInventoryComponent : public UActorComponent
 {
@@ -140,6 +204,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FDataTableRowHandle usableDataTable;
 
 	// Gear
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FW> weaponMap;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<int32> currentGearIndexes{ -1, -1, -1, -1 };
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> gearSlotOneInventory;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> gearSlotTwoInventory;
@@ -160,10 +226,11 @@ public:
 
 	// Inventory
 	void AddToResourceInventory(AResource* resource) { resourceInventory.Add(resource); }
-	void AddToResourceInventory(const FDataTableRowHandle& itemName);
+	void AddToResourceInventory(const FDataTableRowHandle& itemDataTable);
 	void AddToResourceInventory(const FR& resource, uint8 count);
 	void AddToUsuablesInventory(AUsable* usable) { usablesInventory.Add(usable); }
 	void AddToWeaponInventory(TSubclassOf<AWeapon> weapon);
+	void AddToWeaponInventory(const FDataTableRowHandle& weaponDataTable);
 
 	void RemoveResourceFromInventory(const FR& resource, uint8 count);
 
@@ -182,7 +249,7 @@ public:
 	UFUNCTION(BlueprintCallable) int32 GetIngredientsCount(bool first, bool second);
 	UFUNCTION(BlueprintCallable) UTexture2D* GetIngredientImage(bool first, bool second);
 
-	UFUNCTION(BlueprintCallable) UTexture2D* GetEquipmentImage(int32 index);
+	UFUNCTION(BlueprintCallable) UTexture2D* GetInventoryWeaponImage(int32 index);
 	UFUNCTION(BlueprintCallable) UTexture2D* GetGearImage(int32 index, int32& itemCount);
 
 	// Gear

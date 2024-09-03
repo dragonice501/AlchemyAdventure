@@ -38,7 +38,7 @@ AWeapon::AWeapon()
 
 void AWeapon::BuildWeapon()
 {
-
+	
 }
 
 // Called when the game starts or when spawned
@@ -74,7 +74,7 @@ void AWeapon::OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 			{
 				if (DamageType && Owner)
 				{
-					int32 FinalDamage = Damage;
+					int32 FinalDamage = damage;
 					if (OwningCharacter->bAttackModifier)
 					{
 						FinalDamage *= OwningCharacter->attackModifier;
@@ -108,7 +108,7 @@ void AWeapon::OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 
 				if (DamageType && Owner)
 				{
-					int32 FinalDamage = Damage;
+					int32 FinalDamage = damage;
 					if (MainCharacter->bDefenseModifier)
 					{
 						FinalDamage *= MainCharacter->defenseModifier;

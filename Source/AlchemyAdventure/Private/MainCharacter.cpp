@@ -175,7 +175,7 @@ float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	{
 		if (mAttributes)
 		{
-			mAttributes->DepletePoise(Weapon->PoiseCost);
+			mAttributes->DepletePoise(Weapon->poiseCost);
 		}
 	}
 
@@ -250,7 +250,19 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 	{
 		if (currentPickup)
 		{
-			mInventory->AddToResourceInventory(currentPickup->itemDataTable);
+			switch (currentPickup->PickupType)
+			{
+			case EPickupType::EPT_RESOURCE:
+			{
+				mInventory->AddToResourceInventory(currentPickup->itemDataTable);
+				break;
+			}
+			case EPickupType::EPT_WEAPON:
+			{
+				mInventory->AddToWeaponInventory(currentPickup->itemDataTable);
+				break;
+			}
+			}
 
 			currentPickup->Destroy();
 			//DynamicMulticastSetImageAndCount.Broadcast();
@@ -260,6 +272,7 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 				MainPlayerController->RemovePickupPrompt();
 			}
 		}
+
 		/*if (currentPickup->BPPickupItem)
 		{
 			TSubclassOf<AWeapon> PickupWeapon = currentPickup->BPPickupItem;
@@ -325,8 +338,8 @@ void AMainCharacter::Attack(const FInputActionValue& value)
 
 		if(mAttributes)
 		{
-			mAttributes->SetStaminaRechargeTimer(rightHandEquipment->StaminaRechargeDelay);
-			mAttributes->UseStamina(rightHandEquipment->StaminaCost);
+			mAttributes->SetStaminaRechargeTimer(rightHandEquipment->staminaRechargeDelay);
+			mAttributes->UseStamina(rightHandEquipment->staminaCost);
 			mAttributes->ResetPoiseRecharge();
 		}
 	}
@@ -748,9 +761,9 @@ void AMainCharacter::LookAtInventory()
 	SpringArm->SetWorldLocation(GetActorLocation() + LeftDirection);
 }
 
-void AMainCharacter::EquipWeaponR(int32 Index)
+void AMainCharacter::EquipWeaponR(int32 index)
 {
-	if(mInventory)
+	/*if(mInventory)
 	{
 		if (mInventory->weaponInventory.Num() > Index)
 		{
@@ -765,19 +778,36 @@ void AMainCharacter::EquipWeaponR(int32 Index)
 			EquipRightHand(nullptr);
 			RighHandIndex = -1;
 		}
+	}*/
+
+	if (mInventory)
+	{
+		if (mInventory->weaponMap.Num() > 0 && index <= mInventory->weaponMap.Num() - 1)
+		{
+			EquipRightHand(mInventory->weaponMap[index].weaponBlueprint);
+			if (rightHandEquipment)
+			{
+				rightHandEquipment->weaponType = mInventory->weaponMap[index].weaponType;
+				rightHandEquipment->weaponImage = mInventory->weaponMap[index].weaponImage;
+				rightHandEquipment->damage = mInventory->weaponMap[index].damage;
+				rightHandEquipment->staminaCost = mInventory->weaponMap[index].staminaCost;
+				rightHandEquipment->staminaRechargeDelay = mInventory->weaponMap[index].staminaRechargeDelay;
+				rightHandEquipment->poiseCost = mInventory->weaponMap[index].poiseCost;
+			}
+		}
 	}
 }
 
-void AMainCharacter::EquipWeaponL(int32 Index)
+void AMainCharacter::EquipWeaponL(int32 index)
 {
 	if (mInventory)
 	{
-		if (mInventory->weaponInventory.Num() > Index)
+		if (mInventory->weaponInventory.Num() > index)
 		{
-			if (mInventory->weaponInventory[Index])
+			if (mInventory->weaponInventory[index])
 			{
-				EquipLeftHand(mInventory->weaponInventory[Index]);
-				LeftHandIndex = Index;
+				EquipLeftHand(mInventory->weaponInventory[index]);
+				LeftHandIndex = index;
 			}
 		}
 		else
@@ -786,6 +816,16 @@ void AMainCharacter::EquipWeaponL(int32 Index)
 			LeftHandIndex = -1;
 		}
 	}
+}
+
+UTexture2D* AMainCharacter::GetRightWeaponImage()
+{
+	if (rightHandEquipment)
+	{
+		return rightHandEquipment->weaponImage;
+	}
+
+	return nullptr;
 }
 
 void AMainCharacter::GetGear(int32 Index)

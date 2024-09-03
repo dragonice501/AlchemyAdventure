@@ -33,9 +33,9 @@ void UPlayerInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	// ...
 }
 
-void UPlayerInventoryComponent::AddToResourceInventory(const FDataTableRowHandle& itemName)
+void UPlayerInventoryComponent::AddToResourceInventory(const FDataTableRowHandle& itemDataTable)
 {
-	FResourcePropertyTable* row = itemName.GetRow<FResourcePropertyTable>(itemName.RowName.ToString());
+	FResourcePropertyTable* row = itemDataTable.GetRow<FResourcePropertyTable>(itemDataTable.RowName.ToString());
 
 	for (TPair<FR, uint8>& resource : resourceMap)
 	{
@@ -46,10 +46,12 @@ void UPlayerInventoryComponent::AddToResourceInventory(const FDataTableRowHandle
 		}
 	}
 
-	FR newResource;
-	newResource.BuildResource(row);
-	resourceMap.Add(newResource, 1);
-	UE_LOG(LogTemp, Warning, TEXT("New"));
+	if(row)
+	{
+		FR newResource;
+		newResource.BuildResource(row);
+		resourceMap.Add(newResource, 1);
+	}
 }
 
 void UPlayerInventoryComponent::AddToResourceInventory(const FR& resource, uint8 count)
@@ -69,6 +71,19 @@ void UPlayerInventoryComponent::AddToResourceInventory(const FR& resource, uint8
 void UPlayerInventoryComponent::AddToWeaponInventory(TSubclassOf<AWeapon> weapon)
 {
 	weaponInventory.Add(weapon);
+}
+
+void UPlayerInventoryComponent::AddToWeaponInventory(const FDataTableRowHandle& weaponDataTable)
+{
+	UDataTable* dataTable = Cast<UDataTable>(weaponDataTable.DataTable);
+	FWeaponPropertyTable* row = dataTable->FindRow<FWeaponPropertyTable>(FName(weaponDataTable.RowName), TEXT(""));
+	if(row)
+	{
+		FW newWeapon;
+		newWeapon.BuildWeapon(row, weaponDataTable.RowName);
+		weaponMap.Add(newWeapon);
+		//weaponMap.Sort();
+	}
 }
 
 void UPlayerInventoryComponent::RemoveResourceFromInventory(const FR& resource, uint8 count)
@@ -684,12 +699,10 @@ UTexture2D* UPlayerInventoryComponent::GetIngredientImage(bool first, bool secon
 	return nullptr;
 }
 
-UTexture2D* UPlayerInventoryComponent::GetEquipmentImage(int32 index)
+UTexture2D* UPlayerInventoryComponent::GetInventoryWeaponImage(int32 index)
 {
-	UTexture2D* Image = nullptr;
-	int ItemIndex = 1;
-
-	if (weaponInventory.Num() > 0)
+	UTexture2D* image = nullptr;
+	/*if (weaponInventory.Num() > 0)
 	{
 		for (int i = 0; i < weaponInventory.Num(); i++)
 		{
@@ -705,9 +718,14 @@ UTexture2D* UPlayerInventoryComponent::GetEquipmentImage(int32 index)
 				}
 			}
 		}
+	}*/
+
+	if (weaponMap.Num() > 0 && index <= weaponMap.Num() - 1)
+	{
+		image = weaponMap[index].weaponImage;
 	}
 
-	return Image;
+	return image;
 }
 
 UTexture2D* UPlayerInventoryComponent::GetGearImage(int32 index, int32& itemCount)

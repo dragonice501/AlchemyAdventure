@@ -32,11 +32,12 @@ public:
 
 	ACharacter* Owner;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") EWeaponType WeaponType;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float Damage;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float StaminaCost;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float StaminaRechargeDelay;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon") float PoiseCost;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) EWeaponType weaponType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* weaponImage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float damage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float staminaCost;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float staminaRechargeDelay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float poiseCost;
 	
 public:	
 	// Sets default values for this actor's properties

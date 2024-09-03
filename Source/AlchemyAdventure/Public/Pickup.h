@@ -10,9 +10,8 @@
 UENUM(BlueprintType)
 enum class EPickupType : uint8
 {
-	EPT_Resource UMETA(DisplayName = "Resource"),
-	EPT_Item UMETA(DisplayName = "Item"),
-	EPT_Drop UMETA(DisplayName = "Drop"),
+	EPT_RESOURCE UMETA(DisplayName = "Resource"),
+	EPT_WEAPON UMETA(DisplayName = "Weapon")
 };
 
 class AResource;
@@ -28,8 +27,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UStaticMeshComponent* Mesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) class UParticleSystemComponent* IdleParticles;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) EPickupType PickupType;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<class AItem> BPPickupItem;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) FName ItemName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FDataTableRowHandle itemDataTable;
 
 public:	

@@ -224,27 +224,26 @@ public:
 	void LookAtTarget();
 
 	// Equipment
-	UFUNCTION(BlueprintCallable) void EquipWeaponR(int32 Index);
-	UFUNCTION(BlueprintCallable) void EquipWeaponL(int32 Index);
+	UFUNCTION(BlueprintCallable) void EquipWeaponR(int32 index);
+	UFUNCTION(BlueprintCallable) void EquipWeaponL(int32 index);
+
+	UFUNCTION(BlueprintCallable) UTexture2D* GetRightWeaponImage();
 	
 	// Inventory
 	void LookAtInventory();
 
 	// Gear
-	void GetGear(int32 Index);
 	UFUNCTION(BlueprintCallable)void UseDesiredGear();
-
-	void SetAttackModifier(int32 Time, float Modifier);
-	void ResetAttackModifier();
 	UFUNCTION(BlueprintCallable) float GetAttackTimeRemaining();
-
-	void SetDefenseModifier(int32 Time, float Modifier);
-	void ResetDefenseModifier();
 	UFUNCTION(BlueprintCallable) float GetDefenseTimeRemaining();
-
-	void SetMobilityModifier(int32 Time, float Modifier);
-	void ResetMobilityModifier();
 	UFUNCTION(BlueprintCallable) float GetMobilityTimeRemaining();
+	void SetAttackModifier(int32 Time, float Modifier);
+	void SetDefenseModifier(int32 Time, float Modifier);
+	void SetMobilityModifier(int32 Time, float Modifier);
+	void GetGear(int32 Index);
+	void ResetAttackModifier();
+	void ResetDefenseModifier();
+	void ResetMobilityModifier();
 
 	void Heal(float Amount);
 
