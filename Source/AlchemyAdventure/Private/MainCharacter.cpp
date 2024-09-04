@@ -818,6 +818,15 @@ void AMainCharacter::EquipWeaponL(int32 index)
 	}
 }
 
+void AMainCharacter::UnequipWeaponR()
+{
+	if (rightHandEquipment)
+	{
+		rightHandEquipment->Destroy();
+		rightHandEquipment = nullptr;
+	}
+}
+
 UTexture2D* AMainCharacter::GetRightWeaponImage()
 {
 	if (rightHandEquipment)

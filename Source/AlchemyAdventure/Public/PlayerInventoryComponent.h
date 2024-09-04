@@ -195,7 +195,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> firstIngredientMap;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> secondIngredientMap;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FU, uint8> usableMap;
 
 	// Crafting
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> setIngredientsOneInv;
@@ -205,6 +204,12 @@ public:
 
 	// Gear
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FW> weaponMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FU, uint8> usableMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FU, uint8> gearSlotOneMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FU, uint8> gearSlotTwoMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FU, uint8> gearSlotThreeMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FU, uint8> gearSlotFourMap;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<int32> currentGearIndexes{ -1, -1, -1, -1 };
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AUsable*> gearSlotOneInventory;
@@ -229,6 +234,7 @@ public:
 	void AddToResourceInventory(const FDataTableRowHandle& itemDataTable);
 	void AddToResourceInventory(const FR& resource, uint8 count);
 	void AddToUsuablesInventory(AUsable* usable) { usablesInventory.Add(usable); }
+	void AddToUsablesInventory(const FU& usable, const uint8 count);
 	void AddToWeaponInventory(TSubclassOf<AWeapon> weapon);
 	void AddToWeaponInventory(const FDataTableRowHandle& weaponDataTable);
 
@@ -254,8 +260,8 @@ public:
 
 	// Gear
 	UFUNCTION(BlueprintCallable) void SetGearUseIndex(int32 gearBoxIndex, int32 desiredInventoryIndex);
-	UFUNCTION(BlueprintCallable) void GetGearStack(int32 stackIndex, int32 slotIndex);
-	UFUNCTION(BlueprintCallable) void RemoveGearStack(int32 slotIndex);
+	UFUNCTION(BlueprintCallable) void SetGearSlot(int32 stackIndex, int32 slotIndex);
+	UFUNCTION(BlueprintCallable) void RemoveGearAtSlot(int32 gearSlotIndex);
 	UFUNCTION(BlueprintCallable) void SwapGearSlot(int32 firstSlot, int32 secondSlot);
 	UFUNCTION(BlueprintCallable) void GetGearSlotImageAndCount(int32 slotIndex, UTexture2D*& outImage, int32& count, bool& hasGear);
 	UFUNCTION(BlueprintCallable) void GetGearInventoryStackImageAndCount(int32 stackIndex, UTexture2D*& outImage, int32& count, bool& hasGear);

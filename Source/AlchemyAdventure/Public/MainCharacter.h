@@ -226,6 +226,7 @@ public:
 	// Equipment
 	UFUNCTION(BlueprintCallable) void EquipWeaponR(int32 index);
 	UFUNCTION(BlueprintCallable) void EquipWeaponL(int32 index);
+	UFUNCTION(BlueprintCallable) void UnequipWeaponR();
 
 	UFUNCTION(BlueprintCallable) UTexture2D* GetRightWeaponImage();
 	

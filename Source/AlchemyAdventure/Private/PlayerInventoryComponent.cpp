@@ -68,6 +68,21 @@ void UPlayerInventoryComponent::AddToResourceInventory(const FR& resource, uint8
 	resourceMap.Add(resource, count);
 }
 
+void UPlayerInventoryComponent::AddToUsablesInventory(const FU& usable, const uint8 count)
+{
+	int32 index = 0;
+	for (TPair<FU, uint8>& u : usableMap)
+	{
+		if (u.Key == usable)
+		{
+			u.Value += count;
+			return;
+		}
+	}
+
+	usableMap.Add(usable, count);
+}
+
 void UPlayerInventoryComponent::AddToWeaponInventory(TSubclassOf<AWeapon> weapon)
 {
 	weaponInventory.Add(weapon);
@@ -801,9 +816,9 @@ void UPlayerInventoryComponent::SetGearUseIndex(int32 gearBoxIndex, int32 desire
 	}
 }
 
-void UPlayerInventoryComponent::GetGearStack(int32 stackIndex, int32 slotIndex)
+void UPlayerInventoryComponent::SetGearSlot(int32 stackIndex, int32 slotIndex)
 {
-	int32 Index = 0;
+	/*int32 Index = 0;
 	int32 StartIndex = 0;
 	int32 EndIndex = 0;
 
@@ -851,12 +866,151 @@ void UPlayerInventoryComponent::GetGearStack(int32 stackIndex, int32 slotIndex)
 				return;
 			}
 		}
+	}*/
+
+	int32 index = 0;
+	for (TPair<FU, uint8>& usable : usableMap)
+	{
+		if (index == stackIndex)
+		{
+			switch (slotIndex)
+			{
+			case 0:
+			{
+				// Gear slot already occupied
+				if (gearSlotOneMap.begin())
+				{
+					// Gear is the same
+					if (gearSlotOneMap.begin().Key() == usable.Key)
+					{
+						gearSlotOneMap.begin().Value() += usable.Value;
+						usableMap.Remove(usable.Key);
+					}
+					// Gear is different
+					else
+					{
+						// Add gear back to inventory
+						AddToUsablesInventory(gearSlotOneMap.begin().Key(), gearSlotOneMap.begin().Value());
+
+						// Add new gear to slot
+						gearSlotOneMap.Empty();
+						gearSlotOneMap.Add(usable);
+						usableMap.Remove(usable.Key);
+					}
+				}
+				// Move gear from inventory to gear slot
+				else
+				{
+					gearSlotOneMap.Add(usable);
+					usableMap.Remove(usable.Key);
+				}
+				break;
+			}
+			case 1:
+			{
+				// Gear slot already occupied
+				if (gearSlotTwoMap.begin())
+				{
+					// Gear is the same
+					if (gearSlotTwoMap.begin().Key() == usable.Key)
+					{
+						gearSlotTwoMap.begin().Value() += usable.Value;
+						usableMap.Remove(usable.Key);
+					}
+					// Gear is different
+					else
+					{
+						// Add gear back to inventory
+						AddToUsablesInventory(gearSlotTwoMap.begin().Key(), gearSlotTwoMap.begin().Value());
+
+						// Add new gear to slot
+						gearSlotTwoMap.Empty();
+						gearSlotTwoMap.Add(usable);
+						usableMap.Remove(usable.Key);
+					}
+				}
+				// Move gear from inventory to gear slot
+				else
+				{
+					gearSlotTwoMap.Add(usable);
+					usableMap.Remove(usable.Key);
+				}
+				break;
+			}
+			case 2:
+			{
+				// Gear slot already occupied
+				if (gearSlotThreeMap.begin())
+				{
+					// Gear is the same
+					if (gearSlotThreeMap.begin().Key() == usable.Key)
+					{
+						gearSlotThreeMap.begin().Value() += usable.Value;
+						usableMap.Remove(usable.Key);
+					}
+					// Gear is different
+					else
+					{
+						// Add gear back to inventory
+						AddToUsablesInventory(gearSlotThreeMap.begin().Key(), gearSlotThreeMap.begin().Value());
+
+						// Add new gear to slot
+						gearSlotThreeMap.Empty();
+						gearSlotThreeMap.Add(usable);
+						usableMap.Remove(usable.Key);
+					}
+				}
+				// Move gear from inventory to gear slot
+				else
+				{
+					gearSlotThreeMap.Add(usable);
+					usableMap.Remove(usable.Key);
+				}
+				break;
+			}
+			case 3:
+			{
+				// Gear slot already occupied
+				if (gearSlotFourMap.begin())
+				{
+					// Gear is the same
+					if (gearSlotFourMap.begin().Key() == usable.Key)
+					{
+						gearSlotFourMap.begin().Value() += usable.Value;
+						usableMap.Remove(usable.Key);
+					}
+					// Gear is different
+					else
+					{
+						// Add gear back to inventory
+						AddToUsablesInventory(gearSlotFourMap.begin().Key(), gearSlotFourMap.begin().Value());
+
+						// Add new gear to slot
+						gearSlotFourMap.Empty();
+						gearSlotFourMap.Add(usable);
+						usableMap.Remove(usable.Key);
+					}
+				}
+				// Move gear from inventory to gear slot
+				else
+				{
+					gearSlotFourMap.Add(usable);
+					usableMap.Remove(usable.Key);
+				}
+				break;
+			}
+			}
+
+			return;
+		}
+
+		index++;
 	}
 }
 
-void UPlayerInventoryComponent::RemoveGearStack(int32 slotIndex)
+void UPlayerInventoryComponent::RemoveGearAtSlot(int32 slotIndex)
 {
-	switch (slotIndex)
+	/*switch (slotIndex)
 	{
 	case 0:
 		while (gearSlotOneInventory.Num() > 0)
@@ -886,6 +1040,46 @@ void UPlayerInventoryComponent::RemoveGearStack(int32 slotIndex)
 			gearSlotFourInventory.RemoveAt(0);
 		}
 		break;
+	}*/
+
+	switch (slotIndex)
+	{
+	case 0:
+	{
+		if (gearSlotOneMap.begin())
+		{
+			AddToUsablesInventory(gearSlotOneMap.begin().Key(), gearSlotOneMap.begin().Value());
+			gearSlotOneMap.Empty();
+		}
+		break;
+	}
+	case 1:
+	{
+		if (gearSlotTwoMap.begin())
+		{
+			AddToUsablesInventory(gearSlotTwoMap.begin().Key(), gearSlotTwoMap.begin().Value());
+			gearSlotTwoMap.Empty();
+		}
+		break;
+	}
+	case 2:
+	{
+		if (gearSlotThreeMap.begin())
+		{
+			AddToUsablesInventory(gearSlotThreeMap.begin().Key(), gearSlotThreeMap.begin().Value());
+			gearSlotThreeMap.Empty();
+		}
+		break;
+	}
+	case 3:
+	{
+		if (gearSlotFourMap.begin())
+		{
+			AddToUsablesInventory(gearSlotFourMap.begin().Key(), gearSlotFourMap.begin().Value());
+			gearSlotFourMap.Empty();
+		}
+		break;
+	}
 	}
 }
 
@@ -949,7 +1143,7 @@ void UPlayerInventoryComponent::SwapGearSlot(int32 firstSlot, int32 secondSlot)
 
 void UPlayerInventoryComponent::GetGearSlotImageAndCount(int32 slotIndex, UTexture2D*& outImage, int32& count, bool& hasGear)
 {
-	switch (slotIndex)
+	/*switch (slotIndex)
 	{
 	case 0:
 		if (gearSlotOneInventory.Num() > 0)
@@ -999,12 +1193,72 @@ void UPlayerInventoryComponent::GetGearSlotImageAndCount(int32 slotIndex, UTextu
 			hasGear = false;
 		}
 		break;
+	}*/
+
+	switch (slotIndex)
+	{
+	case 0:
+	{
+		if (gearSlotOneMap.begin())
+		{
+			outImage = gearSlotOneMap.begin().Key().usableImage;
+			count = gearSlotOneMap.begin().Value();
+			hasGear = true;
+		}
+		else
+		{
+			hasGear = false;
+		}
+		break;
+	}
+	case 1:
+	{
+		if (gearSlotTwoMap.begin())
+		{
+			outImage = gearSlotTwoMap.begin().Key().usableImage;
+			count = gearSlotTwoMap.begin().Value();
+			hasGear = true;
+		}
+		else
+		{
+			hasGear = false;
+		}
+		break;
+	}
+	case 2:
+	{
+		if (gearSlotThreeMap.begin())
+		{
+			outImage = gearSlotThreeMap.begin().Key().usableImage;
+			count = gearSlotThreeMap.begin().Value();
+			hasGear = true;
+		}
+		else
+		{
+			hasGear = false;
+		}
+		break;
+	}
+	case 3:
+	{
+		if (gearSlotFourMap.begin())
+		{
+			outImage = gearSlotFourMap.begin().Key().usableImage;
+			count = gearSlotFourMap.begin().Value();
+			hasGear = true;
+		}
+		else
+		{
+			hasGear = false;
+		}
+		break;
+	}
 	}
 }
 
 void UPlayerInventoryComponent::GetGearInventoryStackImageAndCount(int32 stackIndex, UTexture2D*& outImage, int32& count, bool& hasGear)
 {
-	int32 Index = 0;
+	/*int32 Index = 0;
 	count = 0;
 	hasGear = false;
 
@@ -1042,7 +1296,23 @@ void UPlayerInventoryComponent::GetGearInventoryStackImageAndCount(int32 stackIn
 			hasGear = true;
 			return;
 		}
+	}*/
+
+	int32 index = 0;
+	for (TPair<FU, uint8>& usable : usableMap)
+	{
+		if (index == stackIndex)
+		{
+			outImage = usable.Key.usableImage;
+			count = usable.Value;
+			hasGear = true;
+			return;
+		}
+
+		index++;
 	}
+
+	hasGear = false;
 }
 
 void UPlayerInventoryComponent::AddToGearSlot(AUsable* usableToAdd, int32 slotIndex)
