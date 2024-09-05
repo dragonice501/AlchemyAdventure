@@ -8,6 +8,16 @@
 #include "Usable.generated.h"
 
 UENUM(BlueprintType)
+enum class EStatusEffect : uint8
+{
+	ESE_None UMETA(DisplayName = "None"),
+	ESE_Attack UMETA(DisplayName = "Attack"),
+	ESE_Heal UMETA(DisplayName = "Heal"),
+	ESE_Defense UMETA(DisplayName = "Defense"),
+	ESE_Mobility UMETA(DisplayName = "Mobility"),
+};
+
+UENUM(BlueprintType)
 enum class EUsableElement : uint8
 {
 	ERE_None UMETA(DisplayName = "None"),
@@ -18,16 +28,6 @@ enum class EUsableElement : uint8
 	ERE_Magic UMETA(DisplayName = "Magic"),
 };
 
-UENUM(BlueprintType)
-enum class EStatusEffect : uint8
-{
-	ESE_None UMETA(DisplayName = "None"),
-	ESE_Attack UMETA(DisplayName = "Attack"),
-	ESE_Heal UMETA(DisplayName = "Heal"),
-	ESE_Defense UMETA(DisplayName = "Defense"),
-	ESE_Mobility UMETA(DisplayName = "Mobility"),
-};
-
 USTRUCT(BlueprintType)
 struct FUsablePropertyTable : public FTableRowBase
 {
@@ -35,6 +35,7 @@ struct FUsablePropertyTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableDescription;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString montageSection;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* usableImage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) EUsableElement usableElement;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) EStatusEffect statusEffect;

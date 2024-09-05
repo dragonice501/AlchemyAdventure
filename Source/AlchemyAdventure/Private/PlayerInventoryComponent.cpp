@@ -83,11 +83,6 @@ void UPlayerInventoryComponent::AddToUsablesInventory(const FU& usable, const ui
 	usableMap.Add(usable, count);
 }
 
-void UPlayerInventoryComponent::AddToWeaponInventory(TSubclassOf<AWeapon> weapon)
-{
-	weaponInventory.Add(weapon);
-}
-
 void UPlayerInventoryComponent::AddToWeaponInventory(const FDataTableRowHandle& weaponDataTable)
 {
 	UDataTable* dataTable = Cast<UDataTable>(weaponDataTable.DataTable);
@@ -361,77 +356,6 @@ void UPlayerInventoryComponent::ResetCraftingIngredients(bool resetFirst, bool r
 	}
 }
 
-void UPlayerInventoryComponent::GetResource(int32 resourceStackIndex, int32 inUseIngredientIndex, int32& resourceInventoryIndex, UTexture2D*& resourceImage, bool& hasResource)
-{
-	int32 Index = 0;
-
-	if (resourceInventory.Num() > 0)
-	{
-		AResource* currentResource = nullptr;
-		AResource* previousResource = nullptr;
-
-		for (int i = 0; i < resourceInventory.Num(); i++)
-		{
-			resourceInventoryIndex = i;
-			if (i == 0) previousResource = resourceInventory[0];
-			else previousResource = currentResource;
-			currentResource = resourceInventory[i];
-
-			if (currentResource->resourceName != previousResource->resourceName)
-			{
-				if (Index == resourceStackIndex)
-				{
-					if (i - 1 != inUseIngredientIndex)
-					{
-						resourceImage = previousResource->resourceImage;
-						resourceInventoryIndex = i - 1;
-						hasResource = true;
-						return;
-					}
-					/*else if (i != inUseIngredientIndex)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("new previous"));
-						resourceImage = PreviousResource->resourceImage;
-						resourceInventoryIndex = i - 1;
-						hasResource = true;
-						return;
-					}*/
-				}
-				Index++;
-			}
-			else if (currentResource->resourceName == previousResource->resourceName)
-			{
-				if (Index == resourceStackIndex)
-				{
-					if (i != inUseIngredientIndex)
-					{
-						resourceImage = previousResource->resourceImage;
-						resourceInventoryIndex = i;
-						hasResource = true;
-						return;
-					}
-					else if (i - 1 != inUseIngredientIndex && resourceInventory[i]->resourceName == currentResource->resourceName)
-					{
-						resourceImage = previousResource->resourceImage;
-						resourceInventoryIndex = i - 1;
-						hasResource = true;
-						return;
-					}
-				}
-			}
-		}
-
-		if (Index == resourceStackIndex && resourceInventoryIndex != inUseIngredientIndex)
-		{
-			resourceImage = currentResource->resourceImage;
-			hasResource = true;
-			return;
-		}
-	}
-
-	hasResource = false;
-}
-
 void UPlayerInventoryComponent::GetResourceImage(int32 resourceStackIndex, UTexture2D*& resourceImage)
 {
 	int32 index = 0;
@@ -679,6 +603,21 @@ bool UPlayerInventoryComponent::CheckCanCraftMore()
 	return false;
 }
 
+UTexture2D* UPlayerInventoryComponent::GetIngredientImage(bool first, bool second)
+{
+	if (first && firstIngredientMap.begin())
+	{
+		return firstIngredientMap.begin().Key().resourceImage;
+	}
+
+	if (second && secondIngredientMap.begin())
+	{
+		return secondIngredientMap.begin().Key().resourceImage;
+	}
+
+	return nullptr;
+}
+
 int32 UPlayerInventoryComponent::GetIngredientsCount(bool first, bool second)
 {
 	if (first && firstIngredientMap.begin())
@@ -692,26 +631,6 @@ int32 UPlayerInventoryComponent::GetIngredientsCount(bool first, bool second)
 	}
 
 	return 0;
-}
-
-UTexture2D* UPlayerInventoryComponent::GetIngredientImage(bool first, bool second)
-{
-	if (first)
-	{
-		if (setIngredientsOneInv.Num() > 0)
-		{
-			return setIngredientsOneInv[0]->resourceImage;
-		}
-	}
-	if (second)
-	{
-		if (setIngredientsTwoInv.Num() > 0)
-		{
-			return setIngredientsTwoInv[0]->resourceImage;
-		}
-	}
-
-	return nullptr;
 }
 
 UTexture2D* UPlayerInventoryComponent::GetInventoryWeaponImage(int32 index)
@@ -743,57 +662,9 @@ UTexture2D* UPlayerInventoryComponent::GetInventoryWeaponImage(int32 index)
 	return image;
 }
 
-UTexture2D* UPlayerInventoryComponent::GetGearImage(int32 index, int32& itemCount)
-{
-	UTexture2D* image = nullptr;
-	int itemIndex = 0;
-	itemCount = 0;
-
-	if (index == -1) return nullptr;
-
-	if (usablesInventory.Num() > 0)
-	{
-		AUsable* currentUsable = nullptr;
-		AUsable* previousVisible = nullptr;
-
-		for (int i = 0; i < usablesInventory.Num(); i++)
-		{
-			if (i == 0) previousVisible = usablesInventory[0];
-			else previousVisible = currentUsable;
-			currentUsable = usablesInventory[i];
-
-			if (currentUsable->usableName != previousVisible->usableName)
-			{
-				if (itemIndex == index)
-				{
-					return image;
-				}
-				itemIndex++;
-				itemCount = 1;
-			}
-			else if (currentUsable->usableName == previousVisible->usableName)
-			{
-				itemCount++;
-			}
-
-			if (itemIndex == index)
-			{
-				image = currentUsable->usableImage;
-			}
-			else
-			{
-				itemCount = 0;
-				image = nullptr;
-			}
-		}
-	}
-
-	return image;
-}
-
 void UPlayerInventoryComponent::SetGearUseIndex(int32 gearBoxIndex, int32 desiredInventoryIndex)
 {
-	int32 swapIndex = -1;
+	/*int32 swapIndex = -1;
 	int32 swapValue = -1;
 
 	for (int i = 0; i < currentGearIndexes.Num(); i++)
@@ -813,7 +684,7 @@ void UPlayerInventoryComponent::SetGearUseIndex(int32 gearBoxIndex, int32 desire
 	if (swapIndex >= 0)
 	{
 		currentGearIndexes[swapIndex] = swapValue;
-	}
+	}*/
 }
 
 void UPlayerInventoryComponent::SetGearSlot(int32 stackIndex, int32 slotIndex)
@@ -1008,7 +879,7 @@ void UPlayerInventoryComponent::SetGearSlot(int32 stackIndex, int32 slotIndex)
 	}
 }
 
-void UPlayerInventoryComponent::RemoveGearAtSlot(int32 slotIndex)
+void UPlayerInventoryComponent::EmptyGearAtSlot(int32 slotIndex)
 {
 	/*switch (slotIndex)
 	{
@@ -1083,61 +954,58 @@ void UPlayerInventoryComponent::RemoveGearAtSlot(int32 slotIndex)
 	}
 }
 
-void UPlayerInventoryComponent::SwapGearSlot(int32 firstSlot, int32 secondSlot)
+void UPlayerInventoryComponent::RemoveFromGearSlot(int32 gearSlotIndex, int32 count)
 {
-	TArray<AUsable*> tempOne;
-	TArray<AUsable*> tempTwo;
-
-	switch (firstSlot)
+	switch (gearSlotIndex)
 	{
 	case 0:
-		tempOne = gearSlotOneInventory;
-		break;
-	case 1:
-		tempOne = gearSlotTwoInventory;
-		break;
-	case 2:
-		tempOne = gearSlotThreeInventory;
-		break;
-	case 3:
-		tempOne = gearSlotFourInventory;
+	{
+		if (gearSlotOneMap.begin().Value() > 0)
+		{
+			gearSlotOneMap.begin().Value() -= count;
+			if (gearSlotOneMap.begin().Value() <= 0)
+			{
+				gearSlotOneMap.Empty();
+			}
+		}
 		break;
 	}
-
-	switch (secondSlot)
-	{
-	case 0:
-		tempTwo = gearSlotOneInventory;
-		gearSlotOneInventory = tempOne;
-		break;
 	case 1:
-		tempTwo = gearSlotTwoInventory;
-		gearSlotTwoInventory = tempOne;
-		break;
-	case 2:
-		tempTwo = gearSlotThreeInventory;
-		gearSlotThreeInventory = tempOne;
-		break;
-	case 3:
-		tempTwo = gearSlotFourInventory;
-		gearSlotFourInventory = tempOne;
+	{
+		if (gearSlotTwoMap.begin().Value() > 0)
+		{
+			gearSlotTwoMap.begin().Value() -= count;
+			if (gearSlotTwoMap.begin().Value() <= 0)
+			{
+				gearSlotTwoMap.Empty();
+			}
+		}
 		break;
 	}
-
-	switch (firstSlot)
-	{
-	case 0:
-		gearSlotOneInventory = tempTwo;
-		break;
-	case 1:
-		gearSlotTwoInventory = tempTwo;
-		break;
 	case 2:
-		gearSlotThreeInventory = tempTwo;
+	{
+		if (gearSlotThreeMap.begin().Value() > 0)
+		{
+			gearSlotThreeMap.begin().Value() -= count;
+			if (gearSlotThreeMap.begin().Value() <= 0)
+			{
+				gearSlotThreeMap.Empty();
+			}
+		}
 		break;
+	}
 	case 3:
-		gearSlotFourInventory = tempTwo;
+	{
+		if (gearSlotFourMap.begin().Value() > 0)
+		{
+			gearSlotFourMap.begin().Value() -= count;
+			if (gearSlotFourMap.begin().Value() <= 0)
+			{
+				gearSlotFourMap.Empty();
+			}
+		}
 		break;
+	}
 	}
 }
 
@@ -1313,67 +1181,4 @@ void UPlayerInventoryComponent::GetGearInventoryStackImageAndCount(int32 stackIn
 	}
 
 	hasGear = false;
-}
-
-void UPlayerInventoryComponent::AddToGearSlot(AUsable* usableToAdd, int32 slotIndex)
-{
-	switch (slotIndex)
-	{
-	case 0:
-		if (gearSlotOneInventory.Num() > 0)
-		{
-			if (gearSlotOneInventory[0]->usableName != usableToAdd->usableName)
-			{
-				while (gearSlotOneInventory.Num() > 0)
-				{
-					usablesInventory.Add(gearSlotOneInventory[0]);
-					gearSlotOneInventory.RemoveAt(0);
-				}
-			}
-		}
-		gearSlotOneInventory.Add(usableToAdd);
-		break;
-	case 1:
-		if (gearSlotTwoInventory.Num() > 0)
-		{
-			if (gearSlotTwoInventory[0]->usableName != usableToAdd->usableName)
-			{
-				while (gearSlotTwoInventory.Num() > 0)
-				{
-					usablesInventory.Add(gearSlotTwoInventory[0]);
-					gearSlotTwoInventory.RemoveAt(0);
-				}
-			}
-		}
-		gearSlotTwoInventory.Add(usableToAdd);
-		break;
-	case 2:
-		if (gearSlotThreeInventory.Num() > 0)
-		{
-			if (gearSlotThreeInventory[0]->usableName != usableToAdd->usableName)
-			{
-				while (gearSlotThreeInventory.Num() > 0)
-				{
-					usablesInventory.Add(gearSlotThreeInventory[0]);
-					gearSlotThreeInventory.RemoveAt(0);
-				}
-			}
-		}
-		gearSlotThreeInventory.Add(usableToAdd);
-		break;
-	case 3:
-		if (gearSlotFourInventory.Num() > 0)
-		{
-			if (gearSlotFourInventory[0]->usableName != usableToAdd->usableName)
-			{
-				while (gearSlotFourInventory.Num() > 0)
-				{
-					usablesInventory.Add(gearSlotFourInventory[0]);
-					gearSlotFourInventory.RemoveAt(0);
-				}
-			}
-		}
-		gearSlotFourInventory.Add(usableToAdd);
-		break;
-	}
 }

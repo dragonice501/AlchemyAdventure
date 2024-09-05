@@ -172,14 +172,14 @@ void AMainPlayerController::SaveGame()
 		SaveGameInstance->PlayerLocation = MainCharacter->GetActorLocation();
 		SaveGameInstance->PlayerRotation = MainCharacter->GetActorRotation();
 		SaveGameInstance->Health = MainCharacter->mAttributes->health;
-		SaveGameInstance->EquipmentInventory = MainCharacter->mInventory->weaponInventory;
 		SaveGameInstance->RightHandIndex = MainCharacter->RighHandIndex;
+		/*SaveGameInstance->EquipmentInventory = MainCharacter->mInventory->weaponInventory;
 		SaveGameInstance->ResourceInventory = MainCharacter->mInventory->resourceInventory;
 		SaveGameInstance->UsablesInventory = MainCharacter->mInventory->usablesInventory;
 		SaveGameInstance->GearSlotOneInventory = MainCharacter->GearSlotOneInventory;
 		SaveGameInstance->GearSlotTwoInventory = MainCharacter->GearSlotTwoInventory;
 		SaveGameInstance->GearSlotThreeInventory = MainCharacter->GearSlotThreeInventory;
-		SaveGameInstance->GearSlotFourInventory = MainCharacter->GearSlotFourInventory;
+		SaveGameInstance->GearSlotFourInventory = MainCharacter->GearSlotFourInventory;*/
 
 		UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->PlayerName, SaveGameInstance->UserSlot);
 	}
@@ -197,14 +197,14 @@ void AMainPlayerController::LoadGame()
 		MainCharacter->SetActorRotation(LoadGameInstance->PlayerRotation);
 
 		MainCharacter->mAttributes->health = LoadGameInstance->Health;
-		MainCharacter->mInventory->weaponInventory = LoadGameInstance->EquipmentInventory;
 		MainCharacter->RighHandIndex = LoadGameInstance->RightHandIndex;
 		if (MainCharacter->RighHandIndex != -1) MainCharacter->EquipWeaponR(MainCharacter->RighHandIndex);
+		/*MainCharacter->mInventory->weaponInventory = LoadGameInstance->EquipmentInventory;
 		MainCharacter->mInventory->resourceInventory = LoadGameInstance->ResourceInventory;
 		MainCharacter->mInventory->usablesInventory = LoadGameInstance->UsablesInventory;
 		MainCharacter->GearSlotOneInventory = LoadGameInstance->GearSlotOneInventory;
 		MainCharacter->GearSlotTwoInventory = LoadGameInstance->GearSlotTwoInventory;
 		MainCharacter->GearSlotThreeInventory = LoadGameInstance->GearSlotThreeInventory;
-		MainCharacter->GearSlotFourInventory = LoadGameInstance->GearSlotFourInventory;
+		MainCharacter->GearSlotFourInventory = LoadGameInstance->GearSlotFourInventory;*/
 	}
 }

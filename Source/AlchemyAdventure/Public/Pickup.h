@@ -7,14 +7,14 @@
 #include "Engine/DataTable.h"
 #include "Pickup.generated.h"
 
+class AResource;
+
 UENUM(BlueprintType)
 enum class EPickupType : uint8
 {
 	EPT_RESOURCE UMETA(DisplayName = "Resource"),
 	EPT_WEAPON UMETA(DisplayName = "Weapon")
 };
-
-class AResource;
 
 UCLASS()
 class ALCHEMYADVENTURE_API APickup : public AActor

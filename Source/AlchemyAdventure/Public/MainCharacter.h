@@ -11,6 +11,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastSetImageAndCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastOpenCharacterMenu);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastResetInventoryHUD);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastPickupItem);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastUseGear);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetAttackTimer, bool, bToggleAttackTimer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetDefenseTimer, bool, bToggleDefenseTimer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetMobilityTimer, bool, bToggleMobilityTimer);
@@ -48,6 +50,9 @@ class ALCHEMYADVENTURE_API AMainCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+	// Controller
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) AMainPlayerController* MainPlayerController;
+
 	// Components
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) USpringArmComponent* SpringArm;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) float SpringArmDefaultLength = 500.f;
@@ -55,8 +60,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) USphereComponent* EnemyDetectionSphere;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UCharacterAttributesComponent* mAttributes;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UPlayerInventoryComponent* mInventory;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) AMainPlayerController* MainPlayerController;
 
 	// Input
 	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Player Character | Input") UInputMappingContext* mMappingContext;
@@ -113,13 +116,6 @@ public:
 	int32 EquippedWeaponIndex = 0;
 
 	// Inventory
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<TSubclassOf<AUsable>> StartingUsables;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<TSubclassOf<AUsable>> PotionMap;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<AUsable*> GearSlotOneInventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<AUsable*> GearSlotTwoInventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<AUsable*> GearSlotThreeInventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Inventory") TArray<AUsable*> GearSlotFourInventory;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<APickup*> OverlappingPickups;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AItem>PickupItem;
 	APickup* currentPickup;
@@ -138,7 +134,7 @@ public:
 
 	//Status Effects
 	AUsable* DesiredGearToUse = nullptr;
-	int32 DesiredGearSlot = -1;
+	int32 mDesiredGearSlot = -1;
 	int32 StatusEffectTime;
 
 	FTimerHandle attackModifierTimer;
@@ -157,6 +153,8 @@ public:
 	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsTwoInv;
 
 	//Delegates
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastPickupItem DynamicMulticastPickupItem;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastUseGear DynamicMulticastUseGear;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetImageAndCount DynamicMulticastSetImageAndCount;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastResetInventoryHUD DynamicMulticastResetInventoryHUD;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastOpenCharacterMenu DynamicMulticastOpenCharacterMenu;
@@ -234,14 +232,16 @@ public:
 	void LookAtInventory();
 
 	// Gear
-	UFUNCTION(BlueprintCallable)void UseDesiredGear();
+	UFUNCTION(BlueprintCallable)void UseGearFromInventory();
+
+	// Modifiers
 	UFUNCTION(BlueprintCallable) float GetAttackTimeRemaining();
 	UFUNCTION(BlueprintCallable) float GetDefenseTimeRemaining();
 	UFUNCTION(BlueprintCallable) float GetMobilityTimeRemaining();
 	void SetAttackModifier(int32 Time, float Modifier);
 	void SetDefenseModifier(int32 Time, float Modifier);
 	void SetMobilityModifier(int32 Time, float Modifier);
-	void GetGear(int32 Index);
+	void UseGear(int32 gearSlotIndex);
 	void ResetAttackModifier();
 	void ResetDefenseModifier();
 	void ResetMobilityModifier();
@@ -259,4 +259,6 @@ public:
 	UFUNCTION(BlueprintCallable) void ResetCombo();
 	UFUNCTION(BlueprintCallable) void ResetDodge();
 	UFUNCTION(BlueprintCallable) void ResetStunned();
+
+	bool Unoccupied();
 };

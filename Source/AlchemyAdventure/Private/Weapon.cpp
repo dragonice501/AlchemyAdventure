@@ -61,62 +61,59 @@ void AWeapon::OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 {
 	if (OtherActor)
 	{
-		AEnemy* OwningEnemy = Cast<AEnemy>(Owner);
-		AMainCharacter* OwningCharacter = Cast<AMainCharacter>(Owner);
-
-		if (OwningCharacter)
+		if (AMainCharacter* owningCharacter = Cast<AMainCharacter>(Owner))
 		{
-			AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+			AEnemy* enemy = Cast<AEnemy>(OtherActor);
 
-			if (HitCharacters.Contains(Enemy)) return;
-
-			if (Enemy)
+			if (HitCharacters.Contains(enemy)) return;
+			else if (enemy)
 			{
-				if (DamageType && Owner)
+				if (damageType)
 				{
-					int32 FinalDamage = damage;
-					if (OwningCharacter->bAttackModifier)
+					int32 finalDamage = damage;
+					if (owningCharacter->bAttackModifier)
 					{
-						FinalDamage *= OwningCharacter->attackModifier;
+						finalDamage *= owningCharacter->attackModifier;
 					}
 
-					UGameplayStatics::ApplyDamage(Enemy, FinalDamage, Owner->GetController(), this, DamageType);
-					if (Enemy->Health == 0)
+					UGameplayStatics::ApplyDamage(enemy, finalDamage, owningCharacter->GetController(), this, damageType);
+					if (enemy->Health == 0)
 					{
-						OwningCharacter->FindBestTargetEnemy();
+						owningCharacter->FindBestTargetEnemy();
 					}
 
-					if (OwningCharacter->TargetEnemy != Enemy)
+					if (owningCharacter->TargetEnemy != enemy)
 					{
-						Enemy->ShowHealthBar(false);
+						enemy->ShowHealthBar(false);
 					}
 				}
-				HitCharacters.Add(Enemy);
+
+				HitCharacters.Add(enemy);
 			}
 		}
-		else if (OwningEnemy)
+		else if (AEnemy* owningEnemy = Cast<AEnemy>(Owner))
 		{
-			AMainCharacter* MainCharacter = Cast<AMainCharacter>(OtherActor);
-			if (MainCharacter)
+			if (AMainCharacter* mainCharacter = Cast<AMainCharacter>(OtherActor))
 			{
-				if (HitCharacters.Contains(MainCharacter)) return;
+				if (HitCharacters.Contains(mainCharacter)) return;
 
-				if (MainCharacter->bInvincible)
+				if (mainCharacter->bInvincible)
 				{
 					return;
 				}
 
-				if (DamageType && Owner)
+				if (damageType && Owner)
 				{
-					int32 FinalDamage = damage;
-					if (MainCharacter->bDefenseModifier)
+					int32 finalDamage = damage;
+					if (mainCharacter->bDefenseModifier)
 					{
-						FinalDamage *= MainCharacter->defenseModifier;
+						finalDamage *= mainCharacter->defenseModifier;
 					}
-					UGameplayStatics::ApplyDamage(MainCharacter, FinalDamage, Owner->GetController(), this, DamageType);
-					MainCharacter->ResetDodge();
+					UGameplayStatics::ApplyDamage(mainCharacter, finalDamage, Owner->GetController(), this, damageType);
+					mainCharacter->ResetDodge();
 				}
-				HitCharacters.Add(MainCharacter);
+
+				HitCharacters.Add(mainCharacter);
 			}
 		}
 	}

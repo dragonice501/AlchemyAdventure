@@ -55,20 +55,6 @@ void AMainCharacter::BeginPlay()
 
 	MainPlayerController = Cast<AMainPlayerController>(GetController());
 
-	if (StartingUsables.Num() > 0)
-	{
-		for (int i = 0; i < StartingUsables.Num(); i++)
-		{
-			AUsable* usable = Cast<AUsable>(StartingUsables[i]->GetDefaultObject());
-			if (usable && mInventory)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("UsablePointer"));
-				usable->BuildUsable(*usable->startingName);
-				mInventory->AddToUsuablesInventory(usable);
-			}
-		}
-	}
-
 	if (StartingWeapon)
 	{
 		EquipRightHand(StartingWeapon);
@@ -266,6 +252,7 @@ void AMainCharacter::Interact(const FInputActionValue& value)
 
 			currentPickup->Destroy();
 			//DynamicMulticastSetImageAndCount.Broadcast();
+			DynamicMulticastPickupItem.Broadcast();
 
 			if (OverlappingPickups.Num() == 0)
 			{
@@ -487,33 +474,68 @@ void AMainCharacter::ToggleLockOn(const FInputActionValue& value)
 
 void AMainCharacter::OnePressed(const FInputActionValue& value)
 {
-	if (GearSlotOneInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned && !bBlocking)
+	if (mInventory)
+	{
+		if (mInventory->gearSlotOneMap.Num() > 0 && Unoccupied())
+		{
+			UseGear(0);
+			mDesiredGearSlot = 0;
+		}
+	}
+
+	/*if (GearSlotOneInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned && !bBlocking)
 	{
 		GetGear(0);
-	}
+	}*/
 }
 
 void AMainCharacter::TwoPressed(const FInputActionValue& value)
 {
-	if (GearSlotTwoInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
+	/*if (GearSlotTwoInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
-		GetGear(1);
+		UseGear(1);
+	}*/
+	if (mInventory)
+	{
+		if (mInventory->gearSlotTwoMap.Num() > 0 && Unoccupied())
+		{
+			UseGear(1);
+			mDesiredGearSlot = 1;
+		}
 	}
 }
 
 void AMainCharacter::ThreePressed(const FInputActionValue& value)
 {
-	if (GearSlotThreeInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
+	/*if (GearSlotThreeInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
-		GetGear(2);
+		UseGear(2);
+	}*/
+
+	if (mInventory)
+	{
+		if (mInventory->gearSlotThreeMap.Num() > 0 && Unoccupied())
+		{
+			UseGear(2);
+			mDesiredGearSlot = 2;
+		}
 	}
 }
 
 void AMainCharacter::FourPressed(const FInputActionValue& value)
 {
-	if (GearSlotFourInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
+	/*if (GearSlotFourInventory.Num() > 0 && !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned)
 	{
-		GetGear(3);
+		UseGear(3);
+	}*/
+
+	if (mInventory)
+	{
+		if (mInventory->gearSlotFourMap.Num() > 0 && Unoccupied())
+		{
+			UseGear(3);
+			mDesiredGearSlot = 3;
+		}
 	}
 }
 
@@ -763,23 +785,6 @@ void AMainCharacter::LookAtInventory()
 
 void AMainCharacter::EquipWeaponR(int32 index)
 {
-	/*if(mInventory)
-	{
-		if (mInventory->weaponInventory.Num() > Index)
-		{
-			if (mInventory->weaponInventory[Index])
-			{
-				EquipRightHand(mInventory->weaponInventory[Index]);
-				RighHandIndex = Index;
-			}
-		}
-		else
-		{
-			EquipRightHand(nullptr);
-			RighHandIndex = -1;
-		}
-	}*/
-
 	if (mInventory)
 	{
 		if (mInventory->weaponMap.Num() > 0 && index <= mInventory->weaponMap.Num() - 1)
@@ -800,22 +805,7 @@ void AMainCharacter::EquipWeaponR(int32 index)
 
 void AMainCharacter::EquipWeaponL(int32 index)
 {
-	if (mInventory)
-	{
-		if (mInventory->weaponInventory.Num() > index)
-		{
-			if (mInventory->weaponInventory[index])
-			{
-				EquipLeftHand(mInventory->weaponInventory[index]);
-				LeftHandIndex = index;
-			}
-		}
-		else
-		{
-			EquipLeftHand(nullptr);
-			LeftHandIndex = -1;
-		}
-	}
+	
 }
 
 void AMainCharacter::UnequipWeaponR()
@@ -837,101 +827,54 @@ UTexture2D* AMainCharacter::GetRightWeaponImage()
 	return nullptr;
 }
 
-void AMainCharacter::GetGear(int32 Index)
+void AMainCharacter::UseGear(int32 gearSlotIndex)
 {
-	switch (Index)
+	if (mInventory)
 	{
-	case 0:
-		DesiredGearToUse = GearSlotOneInventory[0];
-		DesiredGearSlot = 0;
-		break;
-	case 1:
-		DesiredGearToUse = GearSlotTwoInventory[0];
-		DesiredGearSlot = 1;
-		break;
-	case 2:
-		DesiredGearToUse = GearSlotThreeInventory[0];
-		DesiredGearSlot = 2;
-		break;
-	case 3:
-		DesiredGearToUse = GearSlotFourInventory[0];
-		DesiredGearSlot = 3;
-		break;
-	}
-
-	if (DesiredGearToUse)
-	{
-		switch (DesiredGearToUse->statusEffect)
+		switch (gearSlotIndex)
 		{
-		case EStatusEffect::ESE_None:
-			return;
-		case EStatusEffect::ESE_Attack:
-			PlayUseMontage("CrushPotion");
-			return;
-		case EStatusEffect::ESE_Heal:
-			PlayUseMontage("DrinkPotion");
-			return;
-		case EStatusEffect::ESE_Defense:
-			PlayUseMontage("CrushPotion");
-			return;
-		case EStatusEffect::ESE_Mobility:
-			PlayUseMontage("CrushPotion");
+		case 0:
+		{
+			if (mInventory->gearSlotOneMap.begin())
+			{
+				PlayUseMontage(FName(mInventory->gearSlotOneMap.begin().Key().montageSection));
+			}
 			break;
-		default:
-			return;
+		}
+		case 1:
+		{
+			if (mInventory->gearSlotTwoMap.begin())
+			{
+				PlayUseMontage(FName(mInventory->gearSlotTwoMap.begin().Key().montageSection));
+			}
+			break;
+		}
+		case 2:
+		{
+			if (mInventory->gearSlotThreeMap.begin())
+			{
+				PlayUseMontage(FName(mInventory->gearSlotThreeMap.begin().Key().montageSection));
+			}
+			break;
+		}
+		case 3:
+		{
+			if (mInventory->gearSlotFourMap.begin())
+			{
+				PlayUseMontage(FName(mInventory->gearSlotFourMap.begin().Key().montageSection));
+			}
+			break;
+		}
 		}
 	}
 }
 
-void AMainCharacter::UseDesiredGear()
+void AMainCharacter::UseGearFromInventory()
 {
-	if (DesiredGearToUse)
+	if (mDesiredGearSlot >= 0 && mInventory)
 	{
-		switch (DesiredGearSlot)
-		{
-		case 0:
-			GearSlotOneInventory.RemoveAt(0);
-			break;
-		case 1:
-			GearSlotTwoInventory.RemoveAt(0);
-			break;
-		case 2:
-			GearSlotThreeInventory.RemoveAt(0);
-			break;
-		case 3:
-			GearSlotFourInventory.RemoveAt(0);
-			break;
-		}
-
-		switch (DesiredGearToUse->statusEffect)
-		{
-		case EStatusEffect::ESE_None:
-			return;
-		case EStatusEffect::ESE_Attack:
-			SetAttackModifier(DesiredGearToUse->statusEffectTime, DesiredGearToUse->attackModifier);
-			DynamicMulticastSetImageAndCount.Broadcast();
-			DynamicMulticastSetAttackTimer.Broadcast(true);
-			return;
-		case EStatusEffect::ESE_Heal:
-			Heal(DesiredGearToUse->healAmount);
-			DynamicMulticastSetImageAndCount.Broadcast();
-			return;
-		case EStatusEffect::ESE_Defense:
-			SetDefenseModifier(DesiredGearToUse->statusEffectTime, DesiredGearToUse->defenseModifier);
-			DynamicMulticastSetImageAndCount.Broadcast();
-			DynamicMulticastSetDefenseTimer.Broadcast(true);
-			return;
-		case EStatusEffect::ESE_Mobility:
-			SetMobilityModifier(DesiredGearToUse->statusEffectTime, DesiredGearToUse->mobilityModifier);
-			DynamicMulticastSetImageAndCount.Broadcast();
-			DynamicMulticastSetMobilityTimer.Broadcast(true);
-			break;
-		default:
-			return;
-		}
-
-		DesiredGearToUse = nullptr;
-		DesiredGearSlot = -1;
+		mInventory->RemoveFromGearSlot(mDesiredGearSlot, 1);
+		DynamicMulticastUseGear.Broadcast();
 	}
 }
 
@@ -1059,6 +1002,11 @@ void AMainCharacter::Recoil()
 void AMainCharacter::ResetStunned()
 {
 	bStunned = false;
+}
+
+bool AMainCharacter::Unoccupied()
+{
+	return !bInventoryOpen && !bUsing && !bDodging && !bAttacking && !bStunned;
 }
 
 void AMainCharacter::ResetDodge()

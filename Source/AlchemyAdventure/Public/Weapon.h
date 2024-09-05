@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Item.h"
 #include "Weapon.generated.h"
 
 class UArrowComponent;
@@ -18,7 +17,7 @@ enum class EWeaponType : uint8
 };
 
 UCLASS()
-class ALCHEMYADVENTURE_API AWeapon : public AItem
+class ALCHEMYADVENTURE_API AWeapon : public AActor
 {
 	GENERATED_BODY()
 
@@ -28,7 +27,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) USkeletalMeshComponent* Mesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UBoxComponent* AttackCollisionBox;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UBoxComponent* GuardCollisionBox;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UDamageType> DamageType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UDamageType> damageType;
 
 	ACharacter* Owner;
 
