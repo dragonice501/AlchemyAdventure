@@ -2,8 +2,10 @@
 
 
 #include "PlayerInventoryComponent.h"
-#include "Usable.h"
+#include "MainCharacter.h"
 #include "Resource.h"
+#include "StatusEffect.h"
+#include "Usable.h"
 #include "Weapon.h"
 
 // Sets default values for this component's properties
@@ -1006,6 +1008,57 @@ void UPlayerInventoryComponent::RemoveFromGearSlot(int32 gearSlotIndex, int32 co
 		}
 		break;
 	}
+	}
+}
+
+void UPlayerInventoryComponent::UseGearInSlot(int32 gearSlotIndex)
+{
+	if(AMainCharacter* character = Cast<AMainCharacter>(GetOwner()))
+	{
+		switch (gearSlotIndex)
+		{
+		case 0:
+		{
+			if (gearSlotOneMap.begin() && gearSlotOneMap.begin().Key().statusEffect)
+			{
+				gearSlotOneMap.begin().Key().statusEffect.GetDefaultObject()->ApplyEffect(character);
+			}
+			break;
+		}
+		case 1:
+		{
+			if (gearSlotTwoMap.begin())
+			{
+				if (gearSlotTwoMap.begin() && gearSlotTwoMap.begin().Key().statusEffect)
+				{
+					gearSlotTwoMap.begin().Key().statusEffect.GetDefaultObject()->ApplyEffect(character);
+				}
+			}
+			break;
+		}
+		case 2:
+		{
+			if (gearSlotThreeMap.begin())
+			{
+				if (gearSlotThreeMap.begin() && gearSlotThreeMap.begin().Key().statusEffect)
+				{
+					gearSlotThreeMap.begin().Key().statusEffect.GetDefaultObject()->ApplyEffect(character);
+				}
+			}
+			break;
+		}
+		case 3:
+		{
+			if (gearSlotFourMap.begin())
+			{
+				if (gearSlotFourMap.begin() && gearSlotFourMap.begin().Key().statusEffect)
+				{
+					gearSlotFourMap.begin().Key().statusEffect.GetDefaultObject()->ApplyEffect(character);
+				}
+			}
+			break;
+		}
+		}
 	}
 }
 

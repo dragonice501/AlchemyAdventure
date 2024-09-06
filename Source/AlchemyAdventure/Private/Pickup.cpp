@@ -7,7 +7,6 @@
 #include "Engine/StaticMesh.h"
 #include "MainCharacter.h"
 #include "MainPlayerController.h"
-#include "Item.h"
 #include "Resource.h"
 
 // Sets default values

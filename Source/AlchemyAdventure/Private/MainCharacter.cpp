@@ -1,14 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MainCharacter.h"
+#include "CharacterAttributesComponent.h"
 #include "Enemy.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-#include "Item.h"
 #include "MainPlayerController.h"
 #include "Pickup.h"
 #include "PlayerInventoryComponent.h"
 #include "Resource.h"
+#include "StatusEffect.h"
+#include "StatusEffectsComponent.h"
 #include "Usable.h"
 #include "Weapon.h"
 #include "Animation/AnimInstance.h"
@@ -40,6 +42,7 @@ AMainCharacter::AMainCharacter()
 
 	mAttributes = CreateDefaultSubobject<UCharacterAttributesComponent>(TEXT("CharacterAttributes"));
 	mInventory = CreateDefaultSubobject<UPlayerInventoryComponent>(TEXT("PlayerInventory"));
+	mStatusEffects = CreateDefaultSubobject<UStatusEffectsComponent>(TEXT("StatusEffects"));
 
 	SwitchMovementStyle(EMovementStyle::EMS_Free);
 	SwitchCameraMovement(ECameraMovement::ECM_Free);
@@ -873,6 +876,7 @@ void AMainCharacter::UseGearFromInventory()
 {
 	if (mDesiredGearSlot >= 0 && mInventory)
 	{
+		mInventory->UseGearInSlot(mDesiredGearSlot);
 		mInventory->RemoveFromGearSlot(mDesiredGearSlot, 1);
 		DynamicMulticastUseGear.Broadcast();
 	}

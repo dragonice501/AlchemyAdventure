@@ -10,6 +10,8 @@
 #include "Weapon.h"
 #include "PlayerInventoryComponent.generated.h"
 
+class UStatusEffect;
+
 USTRUCT(BlueprintType)
 struct FWeaponPropertyTable : public FTableRowBase
 {
@@ -34,9 +36,8 @@ struct FR
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combinableResources;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combineResults;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* resourceImage;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) EResourceElement resourceElement;
 
-	FR() : resourceName(""), resourceImage(nullptr), resourceElement(EResourceElement::ERE_None) {}
+	FR() : resourceName(""), resourceImage(nullptr) {}
 
 	bool operator== (const FR& other)
 	{
@@ -60,7 +61,6 @@ struct FR
 			combinableResources = row->combinableResources;
 			combineResults = row->combineResults;
 			resourceImage = row->resourceImage;
-			resourceElement = row->resourceElement;
 		}
 	}
 };
@@ -74,15 +74,9 @@ struct FU
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableDescription;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString montageSection;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* usableImage;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) EUsableElement usableElement;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) EStatusEffect statusEffect;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 statusEffectTime;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float attackModifier;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float healAmount;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float defenseModifier;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float mobilityModifier;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UStatusEffect> statusEffect;
 
-	FU() : usableName(""), usableImage(nullptr), usableElement(EUsableElement::ERE_None) {}
+	FU() : usableName(""), usableImage(nullptr) {}
 
 	bool operator== (const FU& other)
 	{
@@ -106,27 +100,6 @@ struct FU
 			montageSection = row->montageSection;
 			usableImage = row->usableImage;
 			statusEffect = row->statusEffect;
-			statusEffectTime = row->statusEffectTime;
-
-			switch (statusEffect)
-			{
-			case EStatusEffect::ESE_None:
-				break;
-			case EStatusEffect::ESE_Attack:
-				attackModifier = row->attackModifier;
-				break;
-			case EStatusEffect::ESE_Heal:
-				healAmount = row->healAmount;
-				break;
-			case EStatusEffect::ESE_Defense:
-				defenseModifier = row->defenseModifier;
-				break;
-			case EStatusEffect::ESE_Mobility:
-				mobilityModifier = row->mobilityModifier;
-				break;
-			default:
-				break;
-			}
 		}
 	}
 };
@@ -176,8 +149,6 @@ struct FW
 			staminaCost = row->staminaCost;
 			staminaRechargeDelay = row->staminaRechargeDelay;
 			poiseCost = row->poiseCost;
-
-			if (weaponImage) UE_LOG(LogTemp, Warning, TEXT("Image"));
 		}
 	}
 };
@@ -244,6 +215,7 @@ public:
 	UFUNCTION(BlueprintCallable) void SetGearSlot(int32 stackIndex, int32 slotIndex);
 	UFUNCTION(BlueprintCallable) void EmptyGearAtSlot(int32 gearSlotIndex);
 	UFUNCTION(BlueprintCallable) void RemoveFromGearSlot(int32 gearSlotIndex, int32 count);
+	UFUNCTION(BlueprintCallable) void UseGearInSlot(int32 gearSlotIndex);
 	UFUNCTION(BlueprintCallable) void GetGearSlotImageAndCount(int32 slotIndex, UTexture2D*& outImage, int32& count, bool& hasGear);
 	UFUNCTION(BlueprintCallable) void GetGearInventoryStackImageAndCount(int32 stackIndex, UTexture2D*& outImage, int32& count, bool& hasGear);
 };

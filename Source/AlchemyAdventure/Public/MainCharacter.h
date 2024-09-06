@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CharacterAttributesComponent.h"
 #include "InputActionValue.h"
 #include "GameFramework/Character.h"
 #include "MainCharacter.generated.h"
@@ -17,19 +16,20 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetAttackTimer, boo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetDefenseTimer, bool, bToggleDefenseTimer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetMobilityTimer, bool, bToggleMobilityTimer);
 
+class UCameraComponent;
+class UCharacterAttributesComponent;
 class AEnemy;
+class UInputAction;
+class UInputMappingContext;
 class AItem;
 class AMainPlayerController;
 class APickup;
-class AResource;
-class AUsable;
-class UCameraComponent;
-class UCharacterAttributesComponent;
-class UInputMappingContext;
-class UInputAction;
 class UPlayerInventoryComponent;
-class USpringArmComponent;
+class AResource;
 class USphereComponent;
+class USpringArmComponent;
+class UStatusEffectsComponent;
+class AUsable;
 
 enum class EMovementStyle : uint8
 {
@@ -50,6 +50,18 @@ class ALCHEMYADVENTURE_API AMainCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+
+	//Delegates
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastPickupItem DynamicMulticastPickupItem;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastUseGear DynamicMulticastUseGear;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetImageAndCount DynamicMulticastSetImageAndCount;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastResetInventoryHUD DynamicMulticastResetInventoryHUD;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastOpenCharacterMenu DynamicMulticastOpenCharacterMenu;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetAttackTimer DynamicMulticastSetAttackTimer;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetDefenseTimer DynamicMulticastSetDefenseTimer;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetMobilityTimer DynamicMulticastSetMobilityTimer;
+
 	// Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) AMainPlayerController* MainPlayerController;
 
@@ -86,10 +98,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Character | Animation") UAnimMontage* DeathMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Character | Animation") UAnimMontage* RecoilMontage;
 
-	FVector mInputVector;
-
-	AEnemy* TargetEnemy = nullptr;
-	FVector EnemyLockOnPosition;
 
 	// Combat
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Combat") UParticleSystem* HitParticles;
@@ -105,34 +113,39 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Player Character | Combat") bool bAttacking;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Player Character | Combat") float StunChance;
 	bool bStunned = false;
+	FVector EnemyLockOnPosition;
+	AEnemy* TargetEnemy = nullptr;
 
 	// Equipment
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player Character | Equipment") AWeapon* rightHandEquipment = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player Character | Equipment") AWeapon* leftHandEquipment = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Player Character | Equipment") TSubclassOf<AWeapon> StartingWeapon;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<int32>CurrentGearIndexes{ -1, -1, -1, -1 };
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) float MaxLockOnDistance = 2000.f;
 	int32 RighHandIndex = -1;
 	int32 LeftHandIndex = -1;
 	int32 EquippedWeaponIndex = 0;
 
 	// Inventory
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<APickup*> OverlappingPickups;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AItem>PickupItem;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AItem>PickupItem;
 	APickup* currentPickup;
+	bool bInventoryOpen = false;
 	bool bCanPickup = false;
 	int32 PickupsCount = 0;
 
 	// Movement
+	FVector mInputVector;
 	float MaxWalkSpeed = 400.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly) float MaxLockOnDistance = 2000.f;
 	bool bFaceTarget = true;
 	bool bCanDodge = false;
 
-	bool bInventoryOpen = false;
 	FRotator CameraFixedRotation;
 
 	//Status Effects
+	UStatusEffectsComponent* mStatusEffects;
+
 	AUsable* DesiredGearToUse = nullptr;
 	int32 mDesiredGearSlot = -1;
 	int32 StatusEffectTime;
@@ -148,19 +161,6 @@ public:
 	FTimerHandle mobilityModifierTimer;
 	bool bMobilityModifier = false;
 	float mobilityModifier = 1.f;
-
-	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsOneInv;
-	UPROPERTY(VisibleAnywhere) TArray<AResource*> SetIngredientsTwoInv;
-
-	//Delegates
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastPickupItem DynamicMulticastPickupItem;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastUseGear DynamicMulticastUseGear;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetImageAndCount DynamicMulticastSetImageAndCount;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastResetInventoryHUD DynamicMulticastResetInventoryHUD;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastOpenCharacterMenu DynamicMulticastOpenCharacterMenu;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetAttackTimer DynamicMulticastSetAttackTimer;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetDefenseTimer DynamicMulticastSetDefenseTimer;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetMobilityTimer DynamicMulticastSetMobilityTimer;
 
 public:
 	// Sets default values for this character's properties

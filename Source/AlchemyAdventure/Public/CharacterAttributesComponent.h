@@ -38,6 +38,8 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION(BlueprintCallable) void AddHealth(const float amount) { health = FMath::Clamp(health + amount, 0, maxHealth); }
+
 	void SetStaminaRechargeTimer(float time);
 	void ResetStaminaRecharge();
 	void UseStamina(float staminaCost);
