@@ -80,7 +80,7 @@ void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	GetCharacterMovement()->MaxWalkSpeed = bMobilityModifier ? MaxWalkSpeed * mobilityModifier : MaxWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 
 	if (bLockedOn && TargetEnemy)
 	{
@@ -133,18 +133,6 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	AMainCharacter* MainCharacter = Cast<AMainCharacter>(this);
-	if (MainCharacter)
-	{
-		if (MainCharacter->bInvincible == true) return 0;
-	}
-
-	AEnemy* Enemy = Cast<AEnemy>(this);
-	if (Enemy)
-	{
-		Enemy->SetTargetCharacter(Cast<AMainCharacter>(EventInstigator->GetCharacter()), true);
-	}
-
 	if(mAttributes)
 	{
 		if (mAttributes->health - DamageAmount <= 0.0f)
@@ -876,84 +864,10 @@ void AMainCharacter::UseGearFromInventory()
 {
 	if (mDesiredGearSlot >= 0 && mInventory)
 	{
-		mInventory->UseGearInSlot(mDesiredGearSlot);
+		mStatusEffects->AddStatusEffect(mInventory->GetGearStatusEffect(mDesiredGearSlot), this);
 		mInventory->RemoveFromGearSlot(mDesiredGearSlot, 1);
 		DynamicMulticastUseGear.Broadcast();
 	}
-}
-
-void AMainCharacter::SetAttackModifier(int32 Time, float Modifier)
-{
-	bAttackModifier = true;
-	attackModifier = Modifier;
-	GetWorldTimerManager().SetTimer(attackModifierTimer, this, &AMainCharacter::ResetAttackModifier, Time);
-}
-
-void AMainCharacter::ResetAttackModifier()
-{
-	bAttackModifier = false;
-	attackModifier = 1;
-	DynamicMulticastSetAttackTimer.Broadcast(false);
-}
-
-float AMainCharacter::GetAttackTimeRemaining()
-{
-	if (bAttackModifier)
-	{
-		return GetWorldTimerManager().GetTimerRemaining(attackModifierTimer);
-	}
-
-	return 0;
-}
-
-void AMainCharacter::SetDefenseModifier(int32 Time, float Modifier)
-{
-	bDefenseModifier = true;
-	defenseModifier = Modifier;
-	GetWorldTimerManager().SetTimer(defenseModifierTimer, this, &AMainCharacter::ResetAttackModifier, Time);
-}
-
-void AMainCharacter::ResetDefenseModifier()
-{
-	bDefenseModifier = false;
-	defenseModifier = 1;
-	DynamicMulticastSetMobilityTimer.Broadcast(false);
-}
-
-float AMainCharacter::GetDefenseTimeRemaining()
-{
-	if (bDefenseModifier)
-	{
-		return GetWorldTimerManager().GetTimerRemaining(defenseModifierTimer);
-	}
-
-	return 0;
-}
-
-void AMainCharacter::SetMobilityModifier(int32 Time, float Modifier)
-{
-	bMobilityModifier = true;
-	mobilityModifier = Modifier;
-	GetWorldTimerManager().SetTimer(mobilityModifierTimer, this, &AMainCharacter::ResetMobilityModifier, Time);
-	CustomTimeDilation = Modifier;
-}
-
-void AMainCharacter::ResetMobilityModifier()
-{
-	bMobilityModifier = false;
-	mobilityModifier = 1;
-	CustomTimeDilation = mobilityModifier;
-	DynamicMulticastSetMobilityTimer.Broadcast(false);
-}
-
-float AMainCharacter::GetMobilityTimeRemaining()
-{
-	if (bMobilityModifier)
-	{
-		return GetWorldTimerManager().GetTimerRemaining(mobilityModifierTimer);
-	}
-
-	return 0;
 }
 
 void AMainCharacter::Heal(float Amount)

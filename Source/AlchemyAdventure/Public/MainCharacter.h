@@ -7,14 +7,14 @@
 #include "GameFramework/Character.h"
 #include "MainCharacter.generated.h"
 
+//UDELEGATE(BlueprintCallable)
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealDelegate, AMainCharacter*, mainCharacter);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastSetImageAndCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastOpenCharacterMenu);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastResetInventoryHUD);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastPickupItem);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDynamicMulticastUseGear);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetAttackTimer, bool, bToggleAttackTimer);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetDefenseTimer, bool, bToggleDefenseTimer);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastSetMobilityTimer, bool, bToggleMobilityTimer);
 
 class UCameraComponent;
 class UCharacterAttributesComponent;
@@ -58,9 +58,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetImageAndCount DynamicMulticastSetImageAndCount;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastResetInventoryHUD DynamicMulticastResetInventoryHUD;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastOpenCharacterMenu DynamicMulticastOpenCharacterMenu;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetAttackTimer DynamicMulticastSetAttackTimer;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetDefenseTimer DynamicMulticastSetDefenseTimer;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, BlueprintAssignable) FDynamicMulticastSetMobilityTimer DynamicMulticastSetMobilityTimer;
 
 	// Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) AMainPlayerController* MainPlayerController;
@@ -72,6 +69,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) USphereComponent* EnemyDetectionSphere;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UCharacterAttributesComponent* mAttributes;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UPlayerInventoryComponent* mInventory;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) UStatusEffectsComponent* mStatusEffects;
 
 	// Input
 	UPROPERTY(Editanywhere, BlueprintReadOnly, Category = "Player Character | Input") UInputMappingContext* mMappingContext;
@@ -97,7 +95,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Character | Animation") UAnimMontage* HurtMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Character | Animation") UAnimMontage* DeathMontage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Character | Animation") UAnimMontage* RecoilMontage;
-
 
 	// Combat
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Character | Combat") UParticleSystem* HitParticles;
@@ -128,7 +125,6 @@ public:
 
 	// Inventory
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<APickup*> OverlappingPickups;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<AItem>PickupItem;
 	APickup* currentPickup;
 	bool bInventoryOpen = false;
 	bool bCanPickup = false;
@@ -144,23 +140,8 @@ public:
 	FRotator CameraFixedRotation;
 
 	//Status Effects
-	UStatusEffectsComponent* mStatusEffects;
-
 	AUsable* DesiredGearToUse = nullptr;
 	int32 mDesiredGearSlot = -1;
-	int32 StatusEffectTime;
-
-	FTimerHandle attackModifierTimer;
-	bool bAttackModifier = false;
-	float attackModifier = 1.f;
-
-	FTimerHandle defenseModifierTimer;
-	bool bDefenseModifier = false;
-	float defenseModifier = 1.f;
-
-	FTimerHandle mobilityModifierTimer;
-	bool bMobilityModifier = false;
-	float mobilityModifier = 1.f;
 
 public:
 	// Sets default values for this character's properties
@@ -233,18 +214,7 @@ public:
 
 	// Gear
 	UFUNCTION(BlueprintCallable)void UseGearFromInventory();
-
-	// Modifiers
-	UFUNCTION(BlueprintCallable) float GetAttackTimeRemaining();
-	UFUNCTION(BlueprintCallable) float GetDefenseTimeRemaining();
-	UFUNCTION(BlueprintCallable) float GetMobilityTimeRemaining();
-	void SetAttackModifier(int32 Time, float Modifier);
-	void SetDefenseModifier(int32 Time, float Modifier);
-	void SetMobilityModifier(int32 Time, float Modifier);
 	void UseGear(int32 gearSlotIndex);
-	void ResetAttackModifier();
-	void ResetDefenseModifier();
-	void ResetMobilityModifier();
 
 	void Heal(float Amount);
 

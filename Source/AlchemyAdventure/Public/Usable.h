@@ -4,18 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Engine/Datatable.h"
-//#include "StatusEffect.h"
 #include "Usable.generated.h"
 
 class UStatusEffect;
-
-UENUM(BlueprintType)
-enum class EEffectDuration : uint8
-{
-	EED_INSTANT UMETA(DisplayName = "Instant"),
-	EED_TEMPORARY UMETA(DisplayName = "Temporary"),
-	EED_TIMED UMETA(DisplayName = "Timed")
-};
 
 //USTRUCT(BlueprintType)
 //struct FStatusEffect
@@ -51,7 +42,7 @@ struct FUsablePropertyTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableDescription;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString montageSection;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* usableImage;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UStatusEffect> statusEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FDataTableRowHandle statusEffect;
 };
 
 UCLASS()

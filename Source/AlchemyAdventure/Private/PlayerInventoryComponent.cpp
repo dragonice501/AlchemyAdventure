@@ -1019,9 +1019,9 @@ void UPlayerInventoryComponent::UseGearInSlot(int32 gearSlotIndex)
 		{
 		case 0:
 		{
-			if (gearSlotOneMap.begin() && gearSlotOneMap.begin().Key().statusEffect)
+			if (gearSlotOneMap.begin())
 			{
-				gearSlotOneMap.begin().Key().statusEffect.GetDefaultObject()->ApplyEffect(character);
+				
 			}
 			break;
 		}
@@ -1029,9 +1029,9 @@ void UPlayerInventoryComponent::UseGearInSlot(int32 gearSlotIndex)
 		{
 			if (gearSlotTwoMap.begin())
 			{
-				if (gearSlotTwoMap.begin() && gearSlotTwoMap.begin().Key().statusEffect)
+				if (gearSlotTwoMap.begin())
 				{
-					gearSlotTwoMap.begin().Key().statusEffect.GetDefaultObject()->ApplyEffect(character);
+					
 				}
 			}
 			break;
@@ -1040,9 +1040,9 @@ void UPlayerInventoryComponent::UseGearInSlot(int32 gearSlotIndex)
 		{
 			if (gearSlotThreeMap.begin())
 			{
-				if (gearSlotThreeMap.begin() && gearSlotThreeMap.begin().Key().statusEffect)
+				if (gearSlotThreeMap.begin())
 				{
-					gearSlotThreeMap.begin().Key().statusEffect.GetDefaultObject()->ApplyEffect(character);
+					
 				}
 			}
 			break;
@@ -1051,9 +1051,9 @@ void UPlayerInventoryComponent::UseGearInSlot(int32 gearSlotIndex)
 		{
 			if (gearSlotFourMap.begin())
 			{
-				if (gearSlotFourMap.begin() && gearSlotFourMap.begin().Key().statusEffect)
+				if (gearSlotFourMap.begin())
 				{
-					gearSlotFourMap.begin().Key().statusEffect.GetDefaultObject()->ApplyEffect(character);
+					
 				}
 			}
 			break;
@@ -1234,4 +1234,45 @@ void UPlayerInventoryComponent::GetGearInventoryStackImageAndCount(int32 stackIn
 	}
 
 	hasGear = false;
+}
+
+FDataTableRowHandle UPlayerInventoryComponent::GetGearStatusEffect(int32 gearSlotIndex)
+{
+	switch (gearSlotIndex)
+	{
+	case 0:
+	{
+		if (gearSlotOneMap.begin() && !gearSlotOneMap.begin().Key().statusEffectDataTable.IsNull())
+		{
+			return gearSlotOneMap.begin().Key().statusEffectDataTable;
+		}
+		break;
+	}
+	case 1:
+	{
+		if (gearSlotTwoMap.begin() && !gearSlotTwoMap.begin().Key().statusEffectDataTable.IsNull())
+		{
+			return gearSlotTwoMap.begin().Key().statusEffectDataTable;
+		}
+		break;
+	}
+	case 2:
+	{
+		if (gearSlotThreeMap.begin() && !gearSlotThreeMap.begin().Key().statusEffectDataTable.IsNull())
+		{
+			return gearSlotThreeMap.begin().Key().statusEffectDataTable;
+		}
+		break;
+	}
+	case 3:
+	{
+		if (gearSlotFourMap.begin() && !gearSlotFourMap.begin().Key().statusEffectDataTable.IsNull())
+		{
+			return gearSlotFourMap.begin().Key().statusEffectDataTable;
+		}
+		break;
+	}
+	}
+
+	return usableDataTable;
 }

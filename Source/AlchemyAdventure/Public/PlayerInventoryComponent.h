@@ -74,7 +74,7 @@ struct FU
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString usableDescription;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FString montageSection;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* usableImage;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UStatusEffect> statusEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FDataTableRowHandle statusEffectDataTable;
 
 	FU() : usableName(""), usableImage(nullptr) {}
 
@@ -99,7 +99,7 @@ struct FU
 			usableDescription = row->usableDescription;
 			montageSection = row->montageSection;
 			usableImage = row->usableImage;
-			statusEffect = row->statusEffect;
+			statusEffectDataTable = row->statusEffect;
 		}
 	}
 };
@@ -218,4 +218,5 @@ public:
 	UFUNCTION(BlueprintCallable) void UseGearInSlot(int32 gearSlotIndex);
 	UFUNCTION(BlueprintCallable) void GetGearSlotImageAndCount(int32 slotIndex, UTexture2D*& outImage, int32& count, bool& hasGear);
 	UFUNCTION(BlueprintCallable) void GetGearInventoryStackImageAndCount(int32 stackIndex, UTexture2D*& outImage, int32& count, bool& hasGear);
+	FDataTableRowHandle GetGearStatusEffect(int32 gearSlotIndex);
 };

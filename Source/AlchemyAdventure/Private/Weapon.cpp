@@ -7,6 +7,7 @@
 #include "MainCharacter.h"
 #include "Enemy.h"
 #include "Kismet/GameplayStatics.h"
+#include "StatusEffectsComponent.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -71,9 +72,9 @@ void AWeapon::OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 				if (damageType)
 				{
 					int32 finalDamage = damage;
-					if (owningCharacter->bAttackModifier)
+					if (owningCharacter->mStatusEffects)
 					{
-						finalDamage *= owningCharacter->attackModifier;
+						owningCharacter->mStatusEffects->ModifyAttackDamage(finalDamage);
 					}
 
 					UGameplayStatics::ApplyDamage(enemy, finalDamage, owningCharacter->GetController(), this, damageType);
@@ -105,10 +106,6 @@ void AWeapon::OnAttackBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 				if (damageType && Owner)
 				{
 					int32 finalDamage = damage;
-					if (mainCharacter->bDefenseModifier)
-					{
-						finalDamage *= mainCharacter->defenseModifier;
-					}
 					UGameplayStatics::ApplyDamage(mainCharacter, finalDamage, Owner->GetController(), this, damageType);
 					mainCharacter->ResetDodge();
 				}

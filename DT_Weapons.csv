@@ -1,0 +1,4 @@
+---,weaponBlueprint,weaponImage,weaponType,damage,staminaCost,staminaRechargeDelay,poiseCost
+Bone,"/Script/Engine.BlueprintGeneratedClass'/Game/Blueprints/Weapons/BP_Blade_Bone.BP_Blade_Bone_C'","/Script/Engine.Texture2D'/Game/Assets/Images/BoneSword.BoneSword'","EWT_Sword","10.000000","10.000000","1.000000","0.000000"
+Arrow,"/Script/Engine.BlueprintGeneratedClass'/Game/Blueprints/Weapons/BP_Blade_Arrow.BP_Blade_Arrow_C'","/Script/Engine.Texture2D'/Game/Assets/Images/Arrow.Arrow'","EWT_Sword","15.000000","10.000000","1.000000","0.000000"
+Glimmer,"/Script/Engine.BlueprintGeneratedClass'/Game/Blueprints/Weapons/BP_Blade_Glimmer.BP_Blade_Glimmer_C'","/Script/Engine.Texture2D'/Game/Assets/Images/Glimmer.Glimmer'","EWT_Sword","20.000000","10.000000","1.000000","0.000000"
