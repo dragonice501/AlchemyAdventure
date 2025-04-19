@@ -37,28 +37,26 @@ void UPlayerInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 void UPlayerInventoryComponent::AddToResourceInventory(const FDataTableRowHandle& itemDataTable)
 {
-	FResourcePropertyTable* row = itemDataTable.GetRow<FResourcePropertyTable>(itemDataTable.RowName.ToString());
+	FResourceStruct* row = itemDataTable.GetRow<FResourceStruct>(itemDataTable.RowName.ToString());
+	if (!row) return;
 
-	for (TPair<FR, uint8>& resource : resourceMap)
+	for (TPair<FResourceStruct, uint8>& resource : resourceMap)
 	{
-		if (row->resourceName == resource.Key.resourceName)
+		if (itemDataTable.RowName.ToString() == resource.Key.resourceName)
 		{
 			resource.Value++;
 			return;
 		}
 	}
 
-	if(row)
-	{
-		FR newResource;
-		newResource.BuildResource(row);
-		resourceMap.Add(newResource, 1);
-	}
+	FResourceStruct newResource;
+	newResource.BuildResource(itemDataTable);
+	resourceMap.Add(newResource, 1);
 }
 
-void UPlayerInventoryComponent::AddToResourceInventory(const FR& resource, uint8 count)
+void UPlayerInventoryComponent::AddToResourceInventory(const FResourceStruct& resource, uint8 count)
 {
-	for (TPair<FR, uint8>& r : resourceMap)
+	for (TPair<FResourceStruct, uint8>& r : resourceMap)
 	{
 		if (r.Key.resourceName == resource.resourceName)
 		{
@@ -98,9 +96,9 @@ void UPlayerInventoryComponent::AddToWeaponInventory(const FDataTableRowHandle& 
 	}
 }
 
-void UPlayerInventoryComponent::RemoveResourceFromInventory(const FR& resource, uint8 count)
+void UPlayerInventoryComponent::RemoveResourceFromInventory(const FResourceStruct& resource, uint8 count)
 {
-	for (TPair<FR, uint8>& r : resourceMap)
+	for (TPair<FResourceStruct, uint8>& r : resourceMap)
 	{
 		if (r.Key.resourceName == resource.resourceName)
 		{
@@ -119,7 +117,7 @@ bool UPlayerInventoryComponent::RemoveAndSetIngredient(int32 resourceStackIndex,
 	int32 resourceIndex = 0;
 
 	int32 index = 0;
-	for (TPair<FR, uint8>& resource : resourceMap)
+	for (TPair<FResourceStruct, uint8>& resource : resourceMap)
 	{
 		// Desired ingredient found
 		if (index == resourceStackIndex)
@@ -361,7 +359,7 @@ void UPlayerInventoryComponent::ResetCraftingIngredients(bool resetFirst, bool r
 void UPlayerInventoryComponent::GetResourceImage(int32 resourceStackIndex, UTexture2D*& resourceImage)
 {
 	int32 index = 0;
-	for (TPair<FR, uint8>& resource : resourceMap)
+	for (TPair<FResourceStruct, uint8>& resource : resourceMap)
 	{
 		if (index == resourceStackIndex)
 		{
@@ -413,7 +411,7 @@ void UPlayerInventoryComponent::GetResourceImage(int32 resourceStackIndex, UText
 void UPlayerInventoryComponent::GetResourceCount(int32 resourceStackIndex, int32& resourceCount)
 {
 	int32 index = 0;
-	for (TPair<FR, uint8>& resource : resourceMap)
+	for (TPair<FResourceStruct, uint8>& resource : resourceMap)
 	{
 		if (index == resourceStackIndex)
 		{

@@ -7,6 +7,9 @@
 #include "StatusEffect.h"
 #include "StatusEffectsComponent.generated.h"
 
+//UDELEGATE(BlueprintCallable)
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStatusEffectAppliedDelegate, StatusEffect*, statusEffect);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ALCHEMYADVENTURE_API UStatusEffectsComponent : public UActorComponent
 {

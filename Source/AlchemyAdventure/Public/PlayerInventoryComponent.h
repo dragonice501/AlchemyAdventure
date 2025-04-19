@@ -27,7 +27,7 @@ struct FWeaponPropertyTable : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct FR
+struct FResourceStruct : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -37,26 +37,26 @@ struct FR
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FString> combineResults;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* resourceImage;
 
-	FR() : resourceName(""), resourceImage(nullptr) {}
+	FResourceStruct() : resourceName(""), resourceImage(nullptr) {}
 
-	bool operator== (const FR& other)
+	bool operator== (const FResourceStruct& other)
 	{
 		return resourceName == other.resourceName;
 	}
-	friend bool operator== (const FR& a, const FR& b)
+	friend bool operator== (const FResourceStruct& a, const FResourceStruct& b)
 	{
 		return a.resourceName == b.resourceName;
 	}
-	friend uint32 GetTypeHash(const FR& other)
+	friend uint32 GetTypeHash(const FResourceStruct& other)
 	{
 		return GetTypeHash(other.resourceName);
 	}
 
-	void BuildResource(const FResourcePropertyTable* row)
+	void BuildResource(const FDataTableRowHandle& datatable)
 	{
-		if (row)
+		if (FResourceStruct* row = datatable.GetRow<FResourceStruct>(datatable.RowName.ToString()))
 		{
-			resourceName = row->resourceName;
+			resourceName = datatable.RowName.ToString();
 			resourceDescription = row->resourceDescription;
 			combinableResources = row->combinableResources;
 			combineResults = row->combineResults;
@@ -120,10 +120,6 @@ struct FW
 
 	FW() : weaponName(""), weaponType(EWeaponType::EWT_Sword) {}
 
-	/*bool operator> (const FW& other)
-	{
-		return weaponType > other.weaponType;
-	}*/
 	bool operator== (const FW& other)
 	{
 		return weaponName == other.weaponName;
@@ -160,9 +156,9 @@ class ALCHEMYADVENTURE_API UPlayerInventoryComponent : public UActorComponent
 
 public:
 	// Inventory
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> resourceMap;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> firstIngredientMap;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FR, uint8> secondIngredientMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FResourceStruct, uint8> resourceMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FResourceStruct, uint8> firstIngredientMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TMap<FResourceStruct, uint8> secondIngredientMap;
 
 
 	// Crafting
@@ -191,11 +187,11 @@ public:
 
 	// Inventory
 	void AddToResourceInventory(const FDataTableRowHandle& itemDataTable);
-	void AddToResourceInventory(const FR& resource, uint8 count);
+	void AddToResourceInventory(const FResourceStruct& resource, uint8 count);
 	void AddToUsablesInventory(const FU& usable, const uint8 count);
 	void AddToWeaponInventory(const FDataTableRowHandle& weaponDataTable);
 
-	void RemoveResourceFromInventory(const FR& resource, uint8 count);
+	void RemoveResourceFromInventory(const FResourceStruct& resource, uint8 count);
 
 	UFUNCTION(BlueprintCallable) bool RemoveAndSetIngredient(int32 resourceStackIndex, int32 resourceSelectIndex, bool firstIngredient, UTexture2D*& resourceImage);
 	UFUNCTION(BlueprintCallable) void ResetCraftingIngredients(bool resetFirst, bool resetSecond);
