@@ -31,7 +31,7 @@ struct FResourcePropertyTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) EResourceElement resourceElement;
 };
 
-UCLASS()
+UCLASS(BlueprintType)
 class ALCHEMYADVENTURE_API AResource : public AActor
 {
 	GENERATED_BODY()
