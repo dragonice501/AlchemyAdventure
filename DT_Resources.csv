@@ -1,5 +1,0 @@
----,resourceName,resourceDescription,combinableResources,combineResults,resourceImage,resourceElement
-AirSeed,"AirSeed","","(""FireFlower"",""WaterBerry"")","(""AttackPotion"",""MobilityPotion"")","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_seeds_03.Tex_seeds_03'","ERE_Air"
-EarthShroom,"EarthShroom","","(""FireFlower"",""WaterBerry"")","(""DefensePotion"",""HealthPotion"")","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_mushrooms_05.Tex_mushrooms_05'","ERE_Earth"
-FireFlower,"FireFlower","","(""AirSeed"",""EarthShroom"")","(""AttackPotion"",""DefensePotion"")","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_herbs_09.Tex_herbs_09'","ERE_Fire"
-WaterBerry,"WaterBerry","","(""AirSeed"",""EarthShroom"")","(""MobilityPotion"",""HealthPotion"")","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_herbs_05.Tex_herbs_05'","ERE_Water"

@@ -1,9 +1,0 @@
----,usableName,usableDescription,montageSection,usableImage,statusEffect
-AttackPotion,"Attack Potion","","Crush","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_reagent_12.Tex_reagent_12'","(DataTable=""/Script/Engine.DataTable'/Game/Data/DT_StatusEffects.DT_StatusEffects'"",RowName=""AttackBoost"")"
-DefensePotion,"Defense Potion","","Crush","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_reagent_03.Tex_reagent_03'","(DataTable=""/Script/Engine.DataTable'/Game/Data/DT_StatusEffects.DT_StatusEffects'"",RowName="""")"
-HealthPotion,"Health Potion","","Drink","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_reagent_06.Tex_reagent_06'","(DataTable=""/Script/Engine.DataTable'/Game/Data/DT_StatusEffects.DT_StatusEffects'"",RowName=""Heal"")"
-MobilityPotion,"Mobility Potion","","Crush","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_reagent_10.Tex_reagent_10'","(DataTable=""/Script/Engine.DataTable'/Game/Data/DT_StatusEffects.DT_StatusEffects'"",RowName="""")"
-AirOil,"Air Oil","","","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_reagent_08.Tex_reagent_08'","(DataTable=None,RowName="""")"
-EarthOil,"Earth Oil","","","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_reagent_07.Tex_reagent_07'","(DataTable=None,RowName="""")"
-FireOil,"Fire Oil","","","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_reagent_09.Tex_reagent_09'","(DataTable=None,RowName="""")"
-WaterOil,"Water Oil","","","/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_reagent_05.Tex_reagent_05'","(DataTable=None,RowName="""")"

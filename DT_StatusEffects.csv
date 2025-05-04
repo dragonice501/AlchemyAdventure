@@ -1,5 +1,0 @@
----,effectImage,effectType,effectDurationType,effectDurationTime,effectValueAmount
-Heal,"None","EED_HEALTH","EED_INSTANT","0.000000","25.000000"
-AttackBoost,"/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_feather_09.Tex_feather_09'","EED_ATTACK","EED_TIMED","10.000000","10.000000"
-DefenseBoost,"/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_feather_07.Tex_feather_07'","EED_DEFENSE","EED_TIMED","10.000000","5.000000"
-MobilityBoost,"/Script/Engine.Texture2D'/Game/Assets/Images/CraftResourcesIcons/Textures/Tex_feather_08.Tex_feather_08'","EED_HEALTH","EED_INSTANT","0.000000","0.000000"
